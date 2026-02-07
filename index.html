@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Obeya Interactif - Agent Général</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 5mm; background: white; }
+            .no-print { display: none; }
+            .client-slot { cursor: default !important; }
+            .col-week { background: white !important; }
+            .historique-panel { display: none; }
+            .main-content { width: 100% !important; }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .page-wrapper {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        .historique-panel {
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .historique-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .historique-week {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .historique-week-header {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .historique-week-date {
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+
+        .historique-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        .historique-stat {
+            text-align: center;
+            padding: 5px;
+            background: white;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .historique-stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .historique-stat-label {
+            font-size: 9px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .historique-taux {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #bdc3c7;
+            font-size: 10px;
+            color: #555;
+            text-align: center;
+        }
+
+        .btn-cloturer {
+            width: 100%;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+
+        .btn-cloturer:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .synthese-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .synthese-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .synthese-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .synthese-date {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .synthese-date input {
+            border: none;
+            border-bottom: 2px solid #2c3e50;
+            background: transparent;
+            font-size: 14px;
+            width: 60px;
+            text-align: center;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .synthese-date input.date-full {
+            width: 100px;
+            font-weight: normal;
+        }
+
+        .synthese-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .synthese-item input {
+            width: 50px;
+            border: 2px solid #2c3e50;
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            background: #f0f0f0;
+        }
+
+        .synthese-item input.auto-calc {
+            background: #d5f4e6;
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+
+        .synthese-item input.historique {
+            background: #fff3cd;
+            border-color: #f1c40f;
+            color: #856404;
+        }
+
+        .synthese-euro {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .time-legend {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #7f8c8d;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .arrow {
+            font-size: 20px;
+            color: #e74c3c;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 3px solid #2c3e50;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .table-header th {
+            padding: 15px 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-right: 1px solid #34495e;
+        }
+
+        .table-header th:last-child {
+            border-right: none;
+            background: #c0392b;
+        }
+
+        .col-status {
+            width: 16%;
+            background: #ecf0f1;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: left;
+            padding: 12px 8px;
+            border-right: 2px solid #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+            vertical-align: top;
+        }
+
+        .col-week {
+            width: 21%;
+            border-right: 2px solid #bdc3c7;
+            border-bottom: 2px solid #bdc3c7;
+            vertical-align: top;
+            padding: 10px;
+            min-height: 100px;
+            background: white;
+            transition: background 0.2s;
+        }
+
+        .col-week:last-child {
+            border-right: none;
+            background: #fff5f5;
+        }
+
+        .col-week.drag-over {
+            background: #d5f4e6 !important;
+            box-shadow: inset 0 0 0 3px #27ae60;
+        }
+
+        .col-week.read-only {
+            background: #f8f9fa;
+        }
+
+        .status-row-demandes .col-status {
+            background: #fff3cd;
+            border-left: 5px solid #f1c40f;
+        }
+        .status-row-devis .col-status {
+            background: #cce5ff;
+            border-left: 5px solid #3498db;
+        }
+        .status-row-envoyes .col-status {
+            background: #e2d4f0;
+            border-left: 5px solid #9b59b6;
+        }
+        .status-row-signes .col-status {
+            background: #d4edda;
+            border-left: 5px solid #27ae60;
+        }
+
+        .status-icon {
+            font-size: 14px;
+            margin-right: 3px;
+        }
+
+        .status-text {
+            font-size: 9px;
+            display: block;
+            margin-top: 2px;
+            color: #555;
+            font-weight: normal;
+        }
+
+        .client-slot {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 80px;
+            cursor: grab;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .client-slot:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+            border-color: #3498db;
+        }
+
+        .client-slot.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: rotate(5deg);
+        }
+
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 3px;
+        }
+
+        .slot-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 11px;
+            flex: 1;
+        }
+
+        .slot-edit {
+            font-size: 11px;
+            color: #3498db;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .slot-edit:hover {
+            background: #ebf5fb;
+        }
+
+        .slot-type {
+            font-size: 9px;
+            color: #7f8c8d;
+            background: #ecf0f1;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
+
+        .slot-dates {
+            font-size: 8px;
+            color: #7f8c8d;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #ecf0f1;
+            line-height: 1.4;
+        }
+
+        .slot-date-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .slot-date-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .slot-notes {
+            font-size: 9px;
+            color: #555;
+            font-style: italic;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+
+        .slot-stickers {
+            display: flex;
+            gap: 3px;
+            margin-top: 5px;
+            justify-content: flex-end;
+            min-height: 14px;
+        }
+
+        .mini-sticker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #333;
+            display: inline-block;
+        }
+
+        .add-slot-btn {
+            width: 100%;
+            padding: 6px;
+            border: 1.5px dashed #bdc3c7;
+            background: transparent;
+            color: #95a5a6;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-top: 5px;
+            transition: all 0.2s;
+        }
+
+        .add-slot-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+            background: #ebf5fb;
+        }
+
+        .no-add {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 10px;
+            padding: 8px;
+            font-style: italic;
+        }
+
+        .parking-header {
+            background: #c0392b;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .stickers-bar {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .stickers-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stickers-list {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .sticker-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #555;
+        }
+
+        .sticker-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .actions {
+            position: fixed;
+            top: 20px;
+            right: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .btn-print { background: #2c3e50; color: white; }
+        .btn-aide { background: #f39c12; color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .help-content {
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .help-content h3 {
+            color: #2c3e50;
+            margin: 15px 0 10px 0;
+            font-size: 14px;
+        }
+
+        .help-content ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .help-content li {
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .help-icon {
+            font-size: 16px;
+            margin-right: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .sticker-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .sticker-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sticker-option:hover { transform: scale(1.1); }
+        .sticker-option.selected {
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #2c3e50;
+        }
+        .sticker-option.selected::after {
+            content: "\2713";
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .btn-cancel { background: #95a5a6; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-save { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-delete { background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+        .delete-zone {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: bold;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .delete-zone.active {
+            display: block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="actions no-print">
+        <button class="btn btn-print" onclick="window.print()">&#x1F5A8;&#xFE0F; Imprimer</button>
+        <button class="btn btn-aide" onclick="ouvrirAide()">&#x2753; Aide</button>
+    </div>
+
+    <div class="delete-zone" id="deleteZone">&#x1F5D1;&#xFE0F; Rel&acirc;chez pour supprimer</div>
+
+    <div class="page-wrapper">
+        <div class="main-content">
+            <div class="header">
+                <h1>&#x1F4CA; Tableau Obeya</h1>
+                <div class="subtitle">Suivi temporel des dossiers - Vue flux</div>
+            </div>
+
+            <div class="synthese-box">
+                <div class="synthese-title">&#x1F4C8; Synth&egrave;se Hebdomadaire (en cours)</div>
+                <div class="synthese-content">
+                    <div class="synthese-date">
+                        Semaine <input type="text" id="num-semaine" readonly> du <input type="text" id="date-debut" class="date-full" readonly> au <input type="text" id="date-fin" class="date-full" readonly>
+                    </div>
+                    <div class="synthese-item">
+                        Demand&eacute;s : <input type="number" id="synth-demandes" class="historique" readonly value="0">
+                    </div>
+                    <div class="synthese-item">
+                        Envoy&eacute;s : <input type="number" id="synth-envoyes" class="auto-calc" readonly value="0">
+                    </div>
+                    <div class="synthese-item">
+                        Sign&eacute;s : <input type="number" id="synth-signes" class="auto-calc" readonly value="0">
+                    </div>
+                    <div class="synthese-item synthese-euro">
+                        &euro; <input type="number" id="synth-euros" value="0" style="width: 80px; font-size: 18px; color: #27ae60;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="time-legend">
+                Temps qui passe <span class="arrow">&rarr;</span>
+            </div>
+
+            <table class="main-table">
+                <thead class="table-header">
+                    <tr>
+                        <th>STATUT</th>
+                        <th>Semaine N<br><small style="font-weight:normal;opacity:0.7;">(Nouveaux)</small></th>
+                        <th>Semaine N+1<br><small style="font-weight:normal;opacity:0.7;">(Retards)</small></th>
+                        <th>Semaine N+2<br><small style="font-weight:normal;opacity:0.7;">(Urgents)</small></th>
+                        <th>&#x1F6A8; PARKING<br><small style="font-weight:normal;opacity:0.7;">(Critique)</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="status-row-demandes">
+                        <td class="col-status">
+                            <span class="status-icon">&#x1F7E1;</span>
+                            DEMANDES
+                            <span class="status-text">Nouvelles demandes de devis</span>
+                        </td>
+                        <td class="col-week drop-zone" data-week="N" data-status="demandes">
+                            <button class="add-slot-btn no-print" onclick="ouvrirModal('demandes', 'N')">+ Ajouter</button>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+1" data-status="demandes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+2" data-status="demandes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone col-parking" data-week="parking" data-status="demandes">
+                            <div class="parking-header">&#x26A0;&#xFE0F; &Agrave; relancer urgent</div>
+                            <div class="no-add">Glissez ici</div>
+                        </td>
+                    </tr>
+
+                    <tr class="status-row-devis">
+                        <td class="col-status">
+                            <span class="status-icon">&#x1F535;</span>
+                            DEVIS EN COURS
+                            <span class="status-text">&Eacute;tude et pr&eacute;paration en cours</span>
+                        </td>
+                        <td class="col-week drop-zone" data-week="N" data-status="devis">
+                            <button class="add-slot-btn no-print" onclick="ouvrirModal('devis', 'N')">+ Ajouter</button>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+1" data-status="devis">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+2" data-status="devis">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone col-parking" data-week="parking" data-status="devis">
+                            <div class="parking-header">&#x26A0;&#xFE0F; Bloqu&eacute; / &Agrave; voir</div>
+                            <div class="no-add">Glissez ici</div>
+                        </td>
+                    </tr>
+
+                    <tr class="status-row-envoyes">
+                        <td class="col-status">
+                            <span class="status-icon">&#x1F7E3;</span>
+                            DEVIS ENVOY&Eacute;S
+                            <span class="status-text">Attente retour client</span>
+                        </td>
+                        <td class="col-week drop-zone" data-week="N" data-status="envoyes">
+                            <button class="add-slot-btn no-print" onclick="ouvrirModal('envoyes', 'N')">+ Ajouter</button>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+1" data-status="envoyes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+2" data-status="envoyes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone col-parking" data-week="parking" data-status="envoyes">
+                            <div class="parking-header">&#x26A0;&#xFE0F; Sans r&eacute;ponse</div>
+                            <div class="no-add">Glissez ici</div>
+                        </td>
+                    </tr>
+
+                    <tr class="status-row-signes">
+                        <td class="col-status">
+                            <span class="status-icon">&#x1F7E2;</span>
+                            DEVIS SIGN&Eacute;S
+                            <span class="status-text">Contrats finalis&eacute;s</span>
+                        </td>
+                        <td class="col-week drop-zone" data-week="N" data-status="signes">
+                            <button class="add-slot-btn no-print" onclick="ouvrirModal('signes', 'N')">+ Ajouter</button>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+1" data-status="signes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone read-only" data-week="N+2" data-status="signes">
+                            <div class="no-add">&mdash;</div>
+                        </td>
+                        <td class="col-week drop-zone col-parking" data-week="parking" data-status="signes">
+                            <div class="parking-header">&#x2705; Archiver</div>
+                            <div class="no-add">Glissez ici</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="stickers-bar">
+                <div class="stickers-title">&#x1F3F7;&#xFE0F; L&eacute;gende des actions :</div>
+                <div class="stickers-list">
+                    <div class="sticker-legend-item">
+                        <div class="sticker-dot" style="background: #e74c3c;"></div>
+                        <span><strong>Relancer</strong> - Client &agrave; recontacter</span>
+                    </div>
+                    <div class="sticker-legend-item">
+                        <div class="sticker-dot" style="background: #f39c12;"></div>
+                        <span><strong>Rappeler</strong> - Attente retour</span>
+                    </div>
+                    <div class="sticker-legend-item">
+                        <div class="sticker-dot" style="background: #f1c40f;"></div>
+                        <span><strong>Voir compagnie</strong> - N&eacute;gociation</span>
+                    </div>
+                    <div class="sticker-legend-item">
+                        <div class="sticker-dot" style="background: #3498db;"></div>
+                        <span><strong>Devis envoy&eacute;</strong> - En attente</span>
+                    </div>
+                    <div class="sticker-legend-item">
+                        <div class="sticker-dot" style="background: #2c3e50;"></div>
+                        <span><strong>Sign&eacute;</strong> - Finalis&eacute;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANNEAU HISTORIQUE -->
+        <div class="historique-panel no-print">
+            <div class="historique-title">
+                &#x1F4DA; Historique
+                <span style="font-size: 11px; color: #7f8c8d; font-weight: normal;">(par semaine)</span>
+            </div>
+
+            <div id="historique-container">
+                <div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 12px;">Aucune semaine cl&ocirc;tur&eacute;e</div>
+            </div>
+
+            <button class="btn-cloturer" onclick="cloturerSemaine()">
+                &#x2705; Cl&ocirc;turer la semaine
+            </button>
+
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 11px; color: #555; line-height: 1.4;">
+                <strong>&#x1F4A1; Astuce :</strong><br>
+                Cliquez sur "Cl&ocirc;turer la semaine" pour archiver les chiffres et repartir &agrave; z&eacute;ro. Les fiches restent en place pour continuer le suivi.
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FICHE -->
+    <div id="modal" class="modal no-print">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">&#x1F4DD; Nouvelle fiche</div>
+            <form id="fiche-form">
+                <input type="hidden" id="edit-id" value="">
+                <div class="form-group">
+                    <label>Nom client</label>
+                    <input type="text" id="client-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Type de contrat</label>
+                    <select id="client-type">
+                        <option value="Auto">&#x1F697; Auto</option>
+                        <option value="Sant&eacute;">&#x1F3E5; Sant&eacute;</option>
+                        <option value="GAV">&#x1F6E1;&#xFE0F; GAV</option>
+                        <option value="MRH">&#x1F3E1; MRH</option>
+                        <option value="DAB">&#x1F3E0; DAB</option>
+                        <option value="Collective">&#x1F465; Collective</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cat&eacute;gorie</label>
+                    <select id="client-cat">
+                        <option value="PART">&#x1F464; Particulier</option>
+                        <option value="PRO">&#x1F3E2; Professionnel</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes / Actions</label>
+                    <textarea id="client-notes" placeholder="Relancer jeudi matin..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Stickers d'action (cliquez pour s&eacute;lectionner plusieurs)</label>
+                    <div class="sticker-selector" id="stickerSelector">
+                        <div class="sticker-option" style="background: #e74c3c;" data-color="red" onclick="toggleSticker(this)"></div>
+                        <div class="sticker-option" style="background: #f39c12;" data-color="orange" onclick="toggleSticker(this)"></div>
+                        <div class="sticker-option" style="background: #f1c40f;" data-color="yellow" onclick="toggleSticker(this)"></div>
+                        <div class="sticker-option" style="background: #3498db;" data-color="blue" onclick="toggleSticker(this)"></div>
+                        <div class="sticker-option" style="background: #2c3e50;" data-color="black" onclick="toggleSticker(this)"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-delete" id="btnDelete" onclick="supprimerFiche()" style="display: none;">&#x1F5D1;&#xFE0F; Supprimer</button>
+                    <button type="button" class="btn-cancel" onclick="fermerModal()">Annuler</button>
+                    <button type="submit" class="btn-save">&#x1F4BE; Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AIDE -->
+    <div id="modal-aide" class="modal no-print">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">&#x2753; Comment utiliser le Tableau Obeya</div>
+            <div class="help-content">
+                <h3><span class="help-icon">&#x2795;</span>Ajouter une fiche</h3>
+                <ul>
+                    <li>Cliquez sur <strong>"+ Ajouter"</strong> dans la colonne <strong>Semaine N</strong></li>
+                    <li>Remplissez les informations client</li>
+                    <li>S&eacute;lectionnez les stickers d'action (plusieurs possibles)</li>
+                    <li>Validez avec "Enregistrer"</li>
+                </ul>
+
+                <h3><span class="help-icon">&#x270B;</span>D&eacute;placer une fiche</h3>
+                <ul>
+                    <li><strong>Cliquez et maintenez</strong> la fiche</li>
+                    <li><strong>Glissez-la</strong> vers une autre colonne</li>
+                    <li>La case devient verte quand vous pouvez d&eacute;poser</li>
+                    <li><strong>Logique :</strong> N &rarr; N+1 &rarr; N+2 &rarr; Parking si retard</li>
+                </ul>
+
+                <h3><span class="help-icon">&#x270F;&#xFE0F;</span>Modifier une fiche</h3>
+                <ul>
+                    <li><strong>Double-cliquez</strong> sur la fiche</li>
+                    <li>Ou cliquez sur le crayon &#x270F;&#xFE0F;</li>
+                    <li>Modifiez les informations et stickers</li>
+                </ul>
+
+                <h3><span class="help-icon">&#x1F5D1;&#xFE0F;</span>Supprimer une fiche</h3>
+                <ul>
+                    <li><strong>Glissez la fiche vers le bas</strong> de l'&eacute;cran</li>
+                    <li>Une zone rouge appara&icirc;t</li>
+                    <li>Rel&acirc;chez pour supprimer d&eacute;finitivement</li>
+                </ul>
+
+                <h3><span class="help-icon">&#x1F4CA;</span>Cl&ocirc;turer la semaine</h3>
+                <ul>
+                    <li>Cliquez sur <strong>"Cl&ocirc;turer la semaine"</strong> dans le panneau historique</li>
+                    <li>Les chiffres sont archiv&eacute;s</li>
+                    <li>Les compteurs repartent &agrave; z&eacute;ro</li>
+                    <li>Les fiches restent en place pour le suivi</li>
+                </ul>
+
+                <h3><span class="help-icon">&#x1F3F7;&#xFE0F;</span>L&eacute;gende des stickers</h3>
+                <ul>
+                    <li>&#x1F534; <strong>Rouge</strong> : Relancer le client</li>
+                    <li>&#x1F7E0; <strong>Orange</strong> : Rappeler (attente retour)</li>
+                    <li>&#x1F7E1; <strong>Jaune</strong> : Voir avec la compagnie</li>
+                    <li>&#x1F535; <strong>Bleu</strong> : Devis envoy&eacute;, en attente</li>
+                    <li>&#x26AB; <strong>Noir</strong> : Sign&eacute;, finalis&eacute;</li>
+                </ul>
+            </div>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn-save" onclick="fermerAide()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentStatus = '';
+        let currentWeek = '';
+        let editingCard = null;
+        let selectedStickers = [];
+        let draggedCard = null;
+
+        let currentWeekData = {
+            numero: 0,
+            debut: '',
+            fin: '',
+            demandes: 0,
+            envoyes: 0,
+            signes: 0,
+            euros: 0
+        };
+
+        let historiqueSemaines = [];
+
+        const stickerColors = {
+            'red': '#e74c3c',
+            'orange': '#f39c12',
+            'yellow': '#f1c40f',
+            'blue': '#3498db',
+            'black': '#2c3e50'
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initDates();
+            initDragAndDrop();
+            chargerDonnees();
+            calculerSynthese();
+            afficherHistorique();
+        });
+
+        function initDates() {
+            const today = new Date();
+            const currentDay = today.getDay();
+            const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+
+            const lundi = new Date(today.setDate(diff));
+            const dimanche = new Date(today.setDate(lundi.getDate() + 6));
+
+            const debutAnnee = new Date(lundi.getFullYear(), 0, 1);
+            const jours = Math.floor((lundi - debutAnnee) / (24 * 60 * 60 * 1000));
+            const numeroSemaine = Math.ceil(jours / 7);
+
+            const formatDate = (d) => d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: '2-digit'});
+
+            currentWeekData.numero = numeroSemaine;
+            currentWeekData.debut = formatDate(lundi);
+            currentWeekData.fin = formatDate(dimanche);
+
+            document.getElementById('num-semaine').value = numeroSemaine;
+            document.getElementById('date-debut').value = currentWeekData.debut;
+            document.getElementById('date-fin').value = currentWeekData.fin;
+        }
+
+        function chargerDonnees() {
+            const saved = localStorage.getItem('obeya_historique_semaines');
+            if (saved) {
+                historiqueSemaines = JSON.parse(saved);
+            }
+        }
+
+        function sauvegarderDonnees() {
+            localStorage.setItem('obeya_historique_semaines', JSON.stringify(historiqueSemaines));
+        }
+
+        function cloturerSemaine() {
+            if (!confirm('Cl\u00f4turer la semaine et archiver les chiffres ?\n\nLes fiches resteront en place pour le suivi.')) {
+                return;
+            }
+
+            const semaineArchive = {
+                numero: currentWeekData.numero,
+                debut: currentWeekData.debut,
+                fin: currentWeekData.fin,
+                demandes: parseInt(document.getElementById('synth-demandes').value) || 0,
+                envoyes: parseInt(document.getElementById('synth-envoyes').value) || 0,
+                signes: parseInt(document.getElementById('synth-signes').value) || 0,
+                euros: parseInt(document.getElementById('synth-euros').value) || 0,
+                dateCloture: new Date().toLocaleDateString('fr-FR')
+            };
+
+            historiqueSemaines.unshift(semaineArchive);
+            sauvegarderDonnees();
+
+            currentWeekData = {
+                numero: currentWeekData.numero + 1,
+                debut: '',
+                fin: '',
+                demandes: 0,
+                envoyes: 0,
+                signes: 0,
+                euros: 0
+            };
+
+            document.getElementById('num-semaine').value = currentWeekData.numero;
+            document.getElementById('synth-demandes').value = 0;
+            document.getElementById('synth-envoyes').value = 0;
+            document.getElementById('synth-signes').value = 0;
+            document.getElementById('synth-euros').value = 0;
+
+            const today = new Date();
+            const lundi = new Date(today.setDate(today.getDate() - today.getDay() + 1 + (currentWeekData.numero - 1) * 7));
+            const dimanche = new Date(today.setDate(lundi.getDate() + 6));
+            const formatDate = (d) => d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: '2-digit'});
+
+            currentWeekData.debut = formatDate(lundi);
+            currentWeekData.fin = formatDate(dimanche);
+            document.getElementById('date-debut').value = currentWeekData.debut;
+            document.getElementById('date-fin').value = currentWeekData.fin;
+
+            afficherHistorique();
+            alert('Semaine cl\u00f4tur\u00e9e avec succ\u00e8s !\nNouvelle semaine : ' + currentWeekData.numero);
+        }
+
+        function afficherHistorique() {
+            const container = document.getElementById('historique-container');
+            container.innerHTML = '';
+
+            if (historiqueSemaines.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 12px;">Aucune semaine cl\u00f4tur\u00e9e</div>';
+                return;
+            }
+
+            historiqueSemaines.forEach((semaine) => {
+                const tauxConversion = semaine.demandes > 0 ? Math.round((semaine.signes / semaine.demandes) * 100) : 0;
+
+                const div = document.createElement('div');
+                div.className = 'historique-week';
+                div.innerHTML = `
+                    <div class="historique-week-header">
+                        <span>Semaine ${semaine.numero}</span>
+                        <span class="historique-week-date">${semaine.debut} - ${semaine.fin}</span>
+                    </div>
+                    <div class="historique-stats">
+                        <div class="historique-stat">
+                            <div class="historique-stat-value">${semaine.demandes}</div>
+                            <div class="historique-stat-label">Demand\u00e9s</div>
+                        </div>
+                        <div class="historique-stat">
+                            <div class="historique-stat-value">${semaine.envoyes}</div>
+                            <div class="historique-stat-label">Envoy\u00e9s</div>
+                        </div>
+                        <div class="historique-stat">
+                            <div class="historique-stat-value">${semaine.signes}</div>
+                            <div class="historique-stat-label">Sign\u00e9s</div>
+                        </div>
+                        <div class="historique-stat">
+                            <div class="historique-stat-value">${semaine.euros}\u20AC</div>
+                            <div class="historique-stat-label">CA</div>
+                        </div>
+                    </div>
+                    <div class="historique-taux">
+                        Taux de conversion : <strong>${tauxConversion}%</strong>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function initDragAndDrop() {
+            const dropZones = document.querySelectorAll('.drop-zone');
+            const deleteZone = document.getElementById('deleteZone');
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+            });
+
+            document.addEventListener('dragover', function(e) {
+                if (draggedCard && e.clientY > window.innerHeight - 100) {
+                    deleteZone.classList.add('active');
+                } else {
+                    deleteZone.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('drop', function(e) {
+                if (draggedCard && e.clientY > window.innerHeight - 100) {
+                    draggedCard.remove();
+                    deleteZone.classList.remove('active');
+                    draggedCard = null;
+                    calculerSynthese();
+                }
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (draggedCard) {
+                const btn = this.querySelector('.add-slot-btn') || this.querySelector('.no-add');
+                this.insertBefore(draggedCard, btn);
+                draggedCard.classList.remove('dragging');
+
+                // Mettre a jour la date selon la nouvelle colonne
+                const newStatus = this.dataset.status;
+                mettreAJourDate(draggedCard, newStatus);
+
+                draggedCard = null;
+                calculerSynthese();
+            }
+        }
+
+        function mettreAJourDate(card, newStatus) {
+            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            let datesDiv = card.querySelector('.slot-dates');
+
+            if (!datesDiv) {
+                datesDiv = document.createElement('div');
+                datesDiv.className = 'slot-dates';
+                card.insertBefore(datesDiv, card.querySelector('.slot-stickers'));
+            }
+
+            // Recuperer les dates existantes
+            let dateDemande = datesDiv.dataset.demande || '';
+            let dateDevis = datesDiv.dataset.devis || '';
+            let dateEnvoye = datesDiv.dataset.envoye || '';
+            let dateSigne = datesDiv.dataset.signe || '';
+
+            // Mettre a jour selon le statut
+            if (newStatus === 'demandes' && !dateDemande) {
+                dateDemande = today;
+                datesDiv.dataset.demande = dateDemande;
+            } else if (newStatus === 'devis' && !dateDevis) {
+                dateDevis = today;
+                datesDiv.dataset.devis = dateDevis;
+            } else if (newStatus === 'envoyes' && !dateEnvoye) {
+                dateEnvoye = today;
+                datesDiv.dataset.envoye = dateEnvoye;
+            } else if (newStatus === 'signes' && !dateSigne) {
+                dateSigne = today;
+                datesDiv.dataset.signe = dateSigne;
+            }
+
+            // Reconstruire l'affichage des dates
+            let html = '';
+            if (dateDemande) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE1 Demand\u00e9:</span> ' + dateDemande + '</div>';
+            if (dateDevis) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDD35 En cours:</span> ' + dateDevis + '</div>';
+            if (dateEnvoye) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE3 Envoy\u00e9:</span> ' + dateEnvoye + '</div>';
+            if (dateSigne) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE2 Sign\u00e9:</span> ' + dateSigne + '</div>';
+
+            datesDiv.innerHTML = html;
+        }
+
+        function makeDraggable(card) {
+            card.draggable = true;
+
+            card.addEventListener('dragstart', function(e) {
+                draggedCard = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                draggedCard = null;
+                document.getElementById('deleteZone').classList.remove('active');
+            });
+
+            card.addEventListener('dblclick', function() {
+                editerFiche(this);
+            });
+        }
+
+        function calculerSynthese() {
+            const demandesActuelles = document.querySelectorAll('[data-status="demandes"] .client-slot').length;
+            const envoyesActuels = document.querySelectorAll('[data-status="envoyes"] .client-slot').length;
+            const signesActuels = document.querySelectorAll('[data-status="signes"] .client-slot').length;
+
+            if (demandesActuelles > currentWeekData.demandes) currentWeekData.demandes = demandesActuelles;
+            if (envoyesActuels > currentWeekData.envoyes) currentWeekData.envoyes = envoyesActuels;
+            if (signesActuels > currentWeekData.signes) currentWeekData.signes = signesActuels;
+
+            document.getElementById('synth-demandes').value = currentWeekData.demandes;
+            document.getElementById('synth-envoyes').value = currentWeekData.envoyes;
+            document.getElementById('synth-signes').value = currentWeekData.signes;
+        }
+
+        function ouvrirModal(status, week) {
+            if (week !== 'N' && week !== 'parking') {
+                alert('Ajout uniquement possible en Semaine N ou Parking');
+                return;
+            }
+
+            currentStatus = status;
+            currentWeek = week;
+            editingCard = null;
+            selectedStickers = [];
+
+            document.getElementById('modalTitle').textContent = '\uD83D\uDCDD Nouvelle fiche';
+            document.getElementById('fiche-form').reset();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('btnDelete').style.display = 'none';
+
+            document.querySelectorAll('.sticker-option').forEach(s => {
+                s.classList.remove('selected');
+            });
+
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function editerFiche(card) {
+            editingCard = card;
+            selectedStickers = [];
+
+            document.getElementById('modalTitle').textContent = '\u270F\uFE0F Modifier la fiche';
+            document.getElementById('btnDelete').style.display = 'inline-block';
+
+            const name = card.querySelector('.slot-name').textContent;
+            const typeText = card.querySelector('.slot-type').textContent;
+            const typeMatch = typeText.match(/(PART|PRO) - (.+)/);
+            const notesEl = card.querySelector('.slot-notes');
+            const notes = notesEl ? notesEl.textContent : '';
+
+            document.getElementById('client-name').value = name;
+            document.getElementById('client-notes').value = notes;
+
+            if (typeMatch) {
+                document.getElementById('client-cat').value = typeMatch[1];
+                document.getElementById('client-type').value = typeMatch[2];
+            }
+
+            const existingStickers = card.querySelectorAll('.mini-sticker');
+            const existingColors = [];
+
+            existingStickers.forEach(sticker => {
+                const computedStyle = window.getComputedStyle(sticker);
+                const bg = computedStyle.backgroundColor;
+
+                for (let [color, hex] of Object.entries(stickerColors)) {
+                    const rgb = hexToRgb(hex);
+                    if (bg === 'rgb(' + rgb + ')' || bg === hex) {
+                        existingColors.push(color);
+                        break;
+                    }
+                }
+            });
+
+            document.querySelectorAll('.sticker-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (existingColors.includes(opt.dataset.color)) {
+                    opt.classList.add('selected');
+                    selectedStickers.push(opt.dataset.color);
+                }
+            });
+
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return r + ', ' + g + ', ' + b;
+        }
+
+        function toggleSticker(el) {
+            const color = el.dataset.color;
+
+            if (el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selectedStickers = selectedStickers.filter(s => s !== color);
+            } else {
+                el.classList.add('selected');
+                selectedStickers.push(color);
+            }
+        }
+
+        function fermerModal() {
+            document.getElementById('modal').style.display = 'none';
+            editingCard = null;
+            selectedStickers = [];
+        }
+
+        function supprimerFiche() {
+            if (editingCard && confirm('Supprimer cette fiche ?')) {
+                editingCard.remove();
+                calculerSynthese();
+                fermerModal();
+            }
+        }
+
+        function creerStickersHtml() {
+            if (selectedStickers.length === 0) return '';
+
+            return selectedStickers.map(color => {
+                return '<div class="mini-sticker" style="background-color: ' + stickerColors[color] + ';"></div>';
+            }).join('');
+        }
+
+        function creerDatesHtml(status) {
+            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            let html = '<div class="slot-dates"';
+
+            let dateDemande = '';
+            let dateDevis = '';
+            let dateEnvoye = '';
+            let dateSigne = '';
+
+            if (status === 'demandes') {
+                dateDemande = today;
+                html += ' data-demande="' + today + '"';
+            } else if (status === 'devis') {
+                dateDemande = today;
+                dateDevis = today;
+                html += ' data-demande="' + today + '" data-devis="' + today + '"';
+            } else if (status === 'envoyes') {
+                dateDemande = today;
+                dateEnvoye = today;
+                html += ' data-demande="' + today + '" data-envoye="' + today + '"';
+            } else if (status === 'signes') {
+                dateDemande = today;
+                dateSigne = today;
+                html += ' data-demande="' + today + '" data-signe="' + today + '"';
+            }
+
+            html += '>';
+
+            if (dateDemande) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE1 Demand\u00e9:</span> ' + dateDemande + '</div>';
+            if (dateDevis) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDD35 En cours:</span> ' + dateDevis + '</div>';
+            if (dateEnvoye) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE3 Envoy\u00e9:</span> ' + dateEnvoye + '</div>';
+            if (dateSigne) html += '<div class="slot-date-item"><span class="slot-date-label">\uD83D\uDFE2 Sign\u00e9:</span> ' + dateSigne + '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        document.getElementById('fiche-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('client-name').value;
+            const type = document.getElementById('client-type').value;
+            const cat = document.getElementById('client-cat').value;
+            const notes = document.getElementById('client-notes').value;
+
+            const stickersHtml = creerStickersHtml();
+            const datesHtml = creerDatesHtml(currentStatus);
+
+            if (editingCard) {
+                editingCard.querySelector('.slot-name').textContent = name;
+                editingCard.querySelector('.slot-type').textContent = cat + ' - ' + type;
+
+                let notesEl = editingCard.querySelector('.slot-notes');
+                if (notes) {
+                    if (!notesEl) {
+                        notesEl = document.createElement('div');
+                        notesEl.className = 'slot-notes';
+                        editingCard.insertBefore(notesEl, editingCard.querySelector('.slot-stickers'));
+                    }
+                    notesEl.textContent = notes;
+                } else if (notesEl) {
+                    notesEl.remove();
+                }
+
+                let stickersContainer = editingCard.querySelector('.slot-stickers');
+                if (!stickersContainer) {
+                    stickersContainer = document.createElement('div');
+                    stickersContainer.className = 'slot-stickers';
+                    editingCard.appendChild(stickersContainer);
+                }
+                stickersContainer.innerHTML = stickersHtml;
+
+            } else {
+                const card = document.createElement('div');
+                card.className = 'client-slot';
+
+                let html = '<div class="slot-header">' +
+                    '<span class="slot-name">' + name + '</span>' +
+                    '<span class="slot-edit no-print">\u270F\uFE0F</span>' +
+                    '</div>' +
+                    '<div class="slot-type">' + cat + ' - ' + type + '</div>';
+
+                if (notes) {
+                    html += '<div class="slot-notes">' + notes + '</div>';
+                }
+
+                html += datesHtml;
+                html += '<div class="slot-stickers">' + stickersHtml + '</div>';
+
+                card.innerHTML = html;
+
+                makeDraggable(card);
+
+                card.querySelector('.slot-edit').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editerFiche(card);
+                });
+
+                const cell = document.querySelector('td[data-week="' + currentWeek + '"][data-status="' + currentStatus + '"]');
+                const btn = cell.querySelector('.add-slot-btn') || cell.querySelector('.no-add');
+                cell.insertBefore(card, btn);
+            }
+
+            calculerSynthese();
+            fermerModal();
+        });
+
+        function ouvrirAide() {
+            document.getElementById('modal-aide').style.display = 'flex';
+        }
+
+        function fermerAide() {
+            document.getElementById('modal-aide').style.display = 'none';
+        }
+
+        window.onclick = function(e) {
+            if (e.target == document.getElementById('modal')) fermerModal();
+            if (e.target == document.getElementById('modal-aide')) fermerAide();
+        }
+    </script>
+</body>
+</html>
