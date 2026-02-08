@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="white"/>
+
+  <!-- Stylized A mark -->
+  <!-- Green stroke (left side of A) -->
+  <path d="M200 310 L256 120 L270 120 L220 290Z" fill="#8CB82B"/>
+  <!-- Yellow stroke (center/right of A) -->
+  <path d="M230 310 L270 190 L290 190 L255 295Z" fill="#E6C619"/>
+  <!-- Red/blue stroke (right accent) -->
+  <path d="M265 250 L290 175 L305 175 L282 245Z" fill="#C8102E"/>
+  <!-- Blue accent at top -->
+  <path d="M270 120 L290 120 L305 175 L290 175Z" fill="#0054A6"/>
+
+  <!-- AREAS text -->
+  <text x="256" y="395" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="95" font-weight="bold" fill="#0054A6" letter-spacing="8">AREAS</text>
+
+  <!-- assurances text -->
+  <text x="256" y="440" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" fill="#4A90C4" letter-spacing="4">assurances</text>
+</svg>

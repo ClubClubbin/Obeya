@@ -1,7 +1,7 @@
 {
-    "name": "Obeya - Suivi Devis",
-    "short_name": "Obeya",
-    "description": "Tableau Obeya interactif pour le suivi des devis",
+    "name": "Areas Assurances - Obeya",
+    "short_name": "Areas Obeya",
+    "description": "Tableau Obeya interactif - Areas Assurances",
     "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
