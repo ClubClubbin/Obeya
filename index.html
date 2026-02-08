@@ -1646,28 +1646,42 @@
                     // --- EXTRACTION DE LA CATÉGORIE ---
                     let cat = lowerText.match(/(pro|professionnel|entreprise|société)/i) ? 'PRO' : 'PART';
             
-                    // --- EXTRACTION DU NOM (La partie la plus délicate) ---
-                    // On cherche ce qui vient après "mr", "mme", "nom de", "famille", "fiche de" ou "client"
+                    // --- EXTRACTION DU NOM (Version Blindée) ---
                     let nom = "";
-                    const nomMatch = lowerText.match(/(?:nom de|mr|mme|monsieur|madame|client|fiche de)\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)/i);
+            
+                    // 1. On nettoie d'abord les préfixes complexes "parasites"
+                    // On remplace "au nom de", "le nom de" par une chaine vide pour ne pas les confondre
+                    let textCleaned = lowerText.replace(/(au nom de|le nom de|du nom de|nom de)/g, "").trim();
+                    
+                    // Exemple : "crée une fiche client [au nom de] monsieur forestier..."
+                    // Devient : "crée une fiche client monsieur forestier..."
+            
+                    // 2. Regex qui cherche le nom après les indicateurs restants (titres ou mots clés)
+                    // On cherche ce qui suit : mr, mme, client, fiche de... 
+                    // ET on autorise un 2ème mot pour le nom (ex: "Gerard Bertrand")
+                    const nomMatch = textCleaned.match(/(?:monsieur|madame|mr|mme|m\.|mle|client|fiche|dossier)\s+([a-zà-ÿ\-]+(?:\s+[a-zà-ÿ\-]+)?)/i);
                     
                     if (nomMatch) {
-                        nom = capitalize(nomMatch[1].trim());
+                        nom = nomMatch[1].trim();
                     } else {
-                        // Si aucune structure n'est trouvée, on prend le premier mot inconnu après le verbe
-                        // (Solution de secours)
-                        const words = lowerText.split(' ');
-                        const indexVerbe = words.findIndex(w => intentions.includes(w));
-                        if (indexVerbe !== -1 && words[indexVerbe + 2]) {
-                            nom = capitalize(words[indexVerbe + 2]); 
+                        // 3. Cas de secours : Si la phrase est juste "Nouveau client Forestier"
+                        // On regarde si on trouve un mot qui n'est pas un mot clé connu
+                        const motApresAction = lowerText.match(/(?:nouveau|créer|ajouter|client)\s+([a-zà-ÿ\-]+)/i);
+                        if (motApresAction) {
+                            // On vérifie que ce n'est pas un mot interdit (comme "un", "une", "le")
+                            const candidat = motApresAction[1];
+                            const motsInterdits = ['un', 'une', 'le', 'la', 'pour', 'auto', 'contrat'];
+                            if (!motsInterdits.includes(candidat)) {
+                                nom = candidat;
+                            }
                         }
                     }
             
+                    // 4. Nettoyage final (Safety check)
+                    // Si jamais "monsieur" a été capturé dans le nom (ex: double titre), on l'enlève
                     if (nom) {
-                        console.log(`Action: Création client | Nom: ${nom} | Type: ${type} | Cat: ${cat}`);
-                        stopVoice();
-                        setTimeout(() => createClientFromVoice(nom, type, cat), 300);
-                        return;
+                        nom = nom.replace(/^(monsieur|madame|mr|mme)\s+/i, "");
+                        nom = capitalize(nom);
                     }
                 }
 
