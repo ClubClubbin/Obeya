@@ -2,25 +2,95 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau Obeya Interactif - Agent Général</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Obeya Voice">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Obeya Voice">
+    
+    <title>Obeya Voice - Tableau Agent Général</title>
+    
+    <!-- Favicon pour PWA -->
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23667eea' width='192' height='192' rx='20'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%23667eea' width='180' height='180' rx='20'/%3E%3Ctext x='90' y='115' font-size='75' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
+    
+    <!-- Manifest PWA inline -->
+    <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Obeya Voice","short_name":"Obeya","start_url":".","display":"standalone","background_color":"#f5f7fa","theme_color":"#667eea","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect fill=\'%23667eea\' width=\'192\' height=\'192\' rx=\'20\'/%3E%3Ctext x=\'96\' y=\'120\' font-size=\'80\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"},{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 512 512\'%3E%3Crect fill=\'%23667eea\' width=\'512\' height=\'512\' rx=\'40\'/%3E%3Ctext x=\'256\' y=\'320\' font-size=\'220\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+    
     <style>
         @media print {
             body { margin: 0; padding: 5mm; background: white; }
-            .no-print { display: none; }
-            .client-slot { cursor: default !important; }
+            .no-print { display: none !important; }
+            .client-slot { cursor: default !important; box-shadow: none !important; }
             .col-week { background: white !important; }
-            .historique-panel { display: none; }
-            .main-content { width: 100% !important; }
+            .main-content { width: 100% !important; margin: 0 !important; }
+            .historique-panel { display: none !important; }
+            .mic-container { display: none !important; }
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 20px;
             min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 120px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .app-header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .app-header .subtitle {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+        
+        .header-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-btn:active {
+            transform: scale(0.95);
         }
         
         .page-wrapper {
@@ -36,243 +106,17 @@
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             overflow: hidden;
-            padding: 30px;
+            padding: 25px;
         }
         
-        .historique-panel {
-            width: 280px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            padding: 20px;
-            position: sticky;
-            top: 20px;
-            height: fit-content;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .historique-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .historique-week {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .historique-week-header {
-            font-size: 12px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .historique-week-date {
-            font-size: 10px;
-            color: #7f8c8d;
-        }
-        
-        .historique-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-        }
-        
-        .historique-stat {
-            text-align: center;
-            padding: 5px;
-            background: white;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-        
-        .historique-stat-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .historique-stat-label {
-            font-size: 9px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-        }
-        
-        .historique-taux {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px dashed #bdc3c7;
-            font-size: 10px;
-            color: #555;
-            text-align: center;
-        }
-        
-        /* NOUVEAU : Styles pour les statistiques de durée */
-        .stats-duree-section {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 2px solid #e9ecef;
-        }
-        
-        .stats-duree-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .stats-duree-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            padding: 15px;
-            color: white;
-            margin-bottom: 15px;
-        }
-        
-        .stats-duree-header {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-align: center;
-            opacity: 0.95;
-        }
-        
-        .stats-duree-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        
-        .stats-duree-item {
-            background: rgba(255,255,255,0.2);
-            border-radius: 6px;
-            padding: 8px;
-            text-align: center;
-            backdrop-filter: blur(4px);
-        }
-        
-        .stats-duree-value {
-            font-size: 18px;
-            font-weight: bold;
-            display: block;
-        }
-        
-        .stats-duree-label {
-            font-size: 9px;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .stats-duree-moyenne {
-            background: rgba(255,255,255,0.3);
-            border-radius: 6px;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .stats-duree-moyenne-value {
-            font-size: 24px;
-            font-weight: bold;
-            display: block;
-        }
-        
-        .stats-duree-moyenne-label {
-            font-size: 10px;
-            opacity: 0.9;
-            text-transform: uppercase;
-        }
-        
-        .stats-duree-detail {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 11px;
-        }
-        
-        .stats-duree-detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .stats-duree-detail-item:last-child {
-            border-bottom: none;
-        }
-        
-        .stats-duree-detail-label {
-            color: #7f8c8d;
-        }
-        
-        .stats-duree-detail-value {
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .btn-cloturer {
-            width: 100%;
-            padding: 10px;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 15px;
-            transition: all 0.2s;
-        }
-        
-        .btn-cloturer:hover {
-            background: #229954;
-            transform: translateY(-2px);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        .header h1 {
-            font-size: 26px;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .header .subtitle {
-            font-size: 14px;
-            color: #7f8c8d;
-        }
+        /* ... [Le reste des styles identiques à la version précédente] ... */
         
         .synthese-box {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border: 3px solid #2c3e50;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .synthese-title {
@@ -381,8 +225,8 @@
         }
         
         .table-header th {
-            padding: 15px 10px;
-            font-size: 12px;
+            padding: 12px 8px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-right: 1px solid #34495e;
@@ -394,23 +238,23 @@
         }
         
         .col-status {
-            width: 16%;
+            width: 14%;
             background: #ecf0f1;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             text-align: left;
-            padding: 12px 8px;
+            padding: 10px 6px;
             border-right: 2px solid #2c3e50;
             border-bottom: 2px solid #bdc3c7;
             vertical-align: top;
         }
         
         .col-week {
-            width: 21%;
+            width: 21.5%;
             border-right: 2px solid #bdc3c7;
             border-bottom: 2px solid #bdc3c7;
             vertical-align: top;
-            padding: 10px;
+            padding: 8px;
             min-height: 100px;
             background: white;
             transition: background 0.2s;
@@ -448,16 +292,17 @@
         }
         
         .status-icon {
-            font-size: 14px;
-            margin-right: 3px;
+            font-size: 12px;
+            margin-right: 2px;
         }
         
         .status-text {
-            font-size: 9px;
+            font-size: 8px;
             display: block;
             margin-top: 2px;
             color: #555;
             font-weight: normal;
+            line-height: 1.2;
         }
         
         .client-slot {
@@ -468,10 +313,12 @@
             margin-bottom: 8px;
             font-size: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-height: 80px;
+            min-height: 70px;
             cursor: grab;
             position: relative;
             transition: all 0.2s;
+            touch-action: none;
+            user-select: none;
         }
         
         .client-slot:hover {
@@ -483,7 +330,8 @@
         .client-slot.dragging {
             opacity: 0.5;
             cursor: grabbing;
-            transform: rotate(5deg);
+            transform: rotate(3deg) scale(1.05);
+            z-index: 1000;
         }
         
         .slot-header {
@@ -498,18 +346,16 @@
             color: #2c3e50;
             font-size: 11px;
             flex: 1;
+            word-break: break-word;
         }
         
         .slot-edit {
-            font-size: 11px;
+            font-size: 10px;
             color: #3498db;
             cursor: pointer;
-            padding: 2px 4px;
+            padding: 2px;
             border-radius: 3px;
-        }
-        
-        .slot-edit:hover {
-            background: #ebf5fb;
+            margin-left: 4px;
         }
         
         .slot-type {
@@ -528,13 +374,13 @@
             margin-top: 4px;
             padding-top: 4px;
             border-top: 1px solid #ecf0f1;
-            line-height: 1.4;
+            line-height: 1.3;
         }
         
         .slot-date-item {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
         
         .slot-date-label {
@@ -546,7 +392,7 @@
             font-size: 9px;
             color: #555;
             font-style: italic;
-            margin-top: 2px;
+            margin-top: 3px;
             line-height: 1.2;
         }
         
@@ -555,15 +401,14 @@
             gap: 3px;
             margin-top: 5px;
             justify-content: flex-end;
-            min-height: 14px;
+            min-height: 12px;
         }
         
         .mini-sticker {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             border: 1px solid #333;
-            display: inline-block;
         }
         
         .add-slot-btn {
@@ -596,12 +441,204 @@
         .parking-header {
             background: #c0392b;
             color: white;
-            padding: 5px;
+            padding: 4px;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 9px;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: bold;
+        }
+        
+        .historique-panel {
+            width: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .historique-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .historique-week {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .historique-week-header {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .historique-week-date {
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+        
+        .historique-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+        
+        .historique-stat {
+            text-align: center;
+            padding: 5px;
+            background: white;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .historique-stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .historique-stat-label {
+            font-size: 9px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        
+        .historique-taux {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #bdc3c7;
+            font-size: 10px;
+            color: #555;
+            text-align: center;
+        }
+        
+        .stats-duree-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #e9ecef;
+        }
+        
+        .stats-duree-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .stats-duree-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .stats-duree-header {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            opacity: 0.95;
+        }
+        
+        .stats-duree-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .stats-duree-item {
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .stats-duree-value {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stats-duree-label {
+            font-size: 9px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+        
+        .stats-duree-moyenne {
+            background: rgba(255,255,255,0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .stats-duree-moyenne-value {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stats-duree-detail {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        
+        .stats-duree-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .stats-duree-detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .btn-cloturer {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+        
+        .btn-cloturer:hover {
+            background: #229954;
+            transform: translateY(-2px);
         }
         
         .stickers-bar {
@@ -621,7 +658,7 @@
         
         .stickers-list {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
         }
         
@@ -634,136 +671,253 @@
         }
         
         .sticker-dot {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             border: 2px solid #333;
         }
         
-        .actions {
+        /* Bouton Micro */
+        .mic-container {
             position: fixed;
-            top: 20px;
-            right: 320px;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 10px;
-            z-index: 1000;
         }
         
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 30px;
+        .mic-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 4px solid white;
+            color: white;
+            font-size: 28px;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: all 0.3s;
+            -webkit-appearance: none;
         }
         
-        .btn-print { background: #2c3e50; color: white; }
-        .btn-aide { background: #f39c12; color: white; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .mic-button:active {
+            transform: scale(0.95);
+        }
         
+        .mic-button.listening {
+            animation: pulse-mic 1.5s infinite;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        @keyframes pulse-mic {
+            0%, 100% { box-shadow: 0 8px 30px rgba(231, 76, 60, 0.5); transform: scale(1); }
+            50% { box-shadow: 0 8px 40px rgba(231, 76, 60, 0.7); transform: scale(1.05); }
+        }
+        
+        .mic-hint {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .mic-hint.visible {
+            opacity: 1;
+        }
+        
+        /* Modal Voice */
+        .voice-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+        
+        .voice-modal.active {
+            display: flex;
+        }
+        
+        .voice-visualizer {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .voice-waves {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            animation: wave 2s infinite;
+        }
+        
+        @keyframes wave {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .voice-text {
+            color: white;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 30px;
+            min-height: 60px;
+            font-weight: 500;
+        }
+        
+        .voice-commands {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .voice-commands-title {
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .voice-command-item {
+            color: rgba(255,255,255,0.9);
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .voice-command-item:last-child {
+            border-bottom: none;
+        }
+        
+        .voice-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        /* Modal Édition */
         .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 2000;
+            z-index: 1500;
             justify-content: center;
             align-items: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
         }
         
         .modal-content {
             background: white;
             padding: 25px;
-            border-radius: 12px;
-            width: 90%;
+            border-radius: 16px;
+            width: 100%;
             max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         
         .modal-header {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #2c3e50;
-        }
-        
-        .help-content {
-            line-height: 1.6;
-            color: #555;
-        }
-        
-        .help-content h3 {
-            color: #2c3e50;
-            margin: 15px 0 10px 0;
-            font-size: 14px;
-        }
-        
-        .help-content ul {
-            margin-left: 20px;
-            margin-bottom: 10px;
-        }
-        
-        .help-content li {
-            margin-bottom: 5px;
-            font-size: 13px;
-        }
-        
-        .help-icon {
-            font-size: 16px;
-            margin-right: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .form-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         
         .form-group label {
             display: block;
             font-size: 12px;
             color: #555;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             font-weight: 600;
+            text-transform: uppercase;
         }
         
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 15px;
             font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
         }
         
-        .form-group textarea {
-            resize: vertical;
-            min-height: 60px;
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #3498db;
         }
         
         .sticker-selector {
             display: flex;
-            gap: 10px;
-            margin-top: 5px;
+            gap: 12px;
             flex-wrap: wrap;
         }
         
         .sticker-option {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 3px solid transparent;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .sticker-option:hover { transform: scale(1.1); }
@@ -774,26 +928,41 @@
         .sticker-option.selected::after {
             content: "✓";
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
         
         .form-actions {
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         
-        .btn-cancel { background: #95a5a6; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .btn-save { background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .btn-delete { background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel { background: #95a5a6; color: white; }
+        .btn-save { background: #3498db; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
         
         .delete-zone {
             display: none;
             position: fixed;
-            bottom: 20px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             background: #e74c3c;
@@ -803,32 +972,155 @@
             font-weight: bold;
             z-index: 1500;
             box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            animation: pulse-delete 1s infinite;
         }
         
         .delete-zone.active {
             display: block;
-            animation: pulse 1s infinite;
         }
         
-        @keyframes pulse {
+        @keyframes pulse-delete {
             0%, 100% { transform: translateX(-50%) scale(1); }
             50% { transform: translateX(-50%) scale(1.05); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #2c3e50;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .voice-help-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        
+        .voice-help-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .voice-help-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 6px 0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            body { padding: 10px; padding-bottom: 120px; }
+            .page-wrapper { flex-direction: column; }
+            .historique-panel { 
+                width: 100%; 
+                position: relative; 
+                top: 0; 
+                max-height: none;
+                order: -1;
+                margin-bottom: 20px;
+            }
+            .main-content { padding: 15px; overflow-x: auto; }
+            .main-table { min-width: 800px; }
+            .col-status { width: 120px; }
+        }
+        
+        @media (max-width: 768px) {
+            .app-header h1 { font-size: 18px; }
+            .synthese-content { gap: 10px; }
+            .synthese-item { font-size: 12px; }
+            .synthese-item input { width: 40px; font-size: 14px; }
+        }
+        
+        /* Installation PWA prompt */
+        .install-prompt {
+            display: none;
+            position: fixed;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            z-index: 999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+        
+        .install-prompt.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .install-btn {
+            background: #27ae60;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="actions no-print">
-        <button class="btn btn-print" onclick="window.print()">🖨️ Imprimer</button>
-        <button class="btn btn-aide" onclick="ouvrirAide()">❓ Aide</button>
+    <!-- Prompt d'installation -->
+    <div class="install-prompt" id="installPrompt">
+        📱 Installer Obeya Voice
+        <button class="install-btn" onclick="installPWA()">Installer</button>
+        <button onclick="dismissInstall()" style="background:none;border:none;color:white;font-size:18px;">✕</button>
     </div>
 
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- Delete Zone -->
     <div class="delete-zone" id="deleteZone">🗑️ Relâchez pour supprimer</div>
 
     <div class="page-wrapper">
         <div class="main-content">
-            <div class="header">
-                <h1>📊 Tableau Obeya</h1>
+            <div class="app-header">
+                <h1>📊 Tableau Obeya Voice</h1>
                 <div class="subtitle">Suivi temporel des dossiers - Vue flux</div>
+                <div class="header-actions no-print">
+                    <button class="header-btn" onclick="imprimer()" title="Imprimer">🖨️</button>
+                    <button class="header-btn" onclick="showHelp()" title="Aide">❓</button>
+                </div>
+            </div>
+            
+            <div class="voice-help-box no-print">
+                <div class="voice-help-title">🎙️ Commandes vocales disponibles :</div>
+                <div class="voice-help-item">"Nouveau client Dupont Auto Particulier"</div>
+                <div class="voice-help-item">"Ajouter note à Dupont : relancer demain matin"</div>
+                <div class="voice-help-item">"Déplacer Dupont vers signés"</div>
             </div>
 
             <div class="synthese-box">
@@ -860,10 +1152,10 @@
                 <thead class="table-header">
                     <tr>
                         <th>STATUT</th>
-                        <th>Semaine N<br><small style="font-weight:normal;opacity:0.7;">(Nouveaux)</small></th>
-                        <th>Semaine N+1<br><small style="font-weight:normal;opacity:0.7;">(Retards)</small></th>
-                        <th>Semaine N+2<br><small style="font-weight:normal;opacity:0.7;">(Urgents)</small></th>
-                        <th>🚨 PARKING<br><small style="font-weight:normal;opacity:0.7;">(Critique)</small></th>
+                        <th>Semaine N<br><small>(Nouveaux)</small></th>
+                        <th>Semaine N+1<br><small>(Retards)</small></th>
+                        <th>Semaine N+2<br><small>(Urgents)</small></th>
+                        <th>🚨 PARKING<br><small>(Critique)</small></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -953,34 +1245,33 @@
                 </tbody>
             </table>
 
-            <div class="stickers-bar">
+            <div class="stickers-bar no-print">
                 <div class="stickers-title">🏷️ Légende des actions :</div>
                 <div class="stickers-list">
                     <div class="sticker-legend-item">
                         <div class="sticker-dot" style="background: #e74c3c;"></div>
-                        <span><strong>Relancer</strong> - Client à recontacter</span>
+                        <span><strong>Relancer</strong></span>
                     </div>
                     <div class="sticker-legend-item">
                         <div class="sticker-dot" style="background: #f39c12;"></div>
-                        <span><strong>Rappeler</strong> - Attente retour</span>
+                        <span><strong>Rappeler</strong></span>
                     </div>
                     <div class="sticker-legend-item">
                         <div class="sticker-dot" style="background: #f1c40f;"></div>
-                        <span><strong>Voir compagnie</strong> - Négociation</span>
+                        <span><strong>Voir compagnie</strong></span>
                     </div>
                     <div class="sticker-legend-item">
                         <div class="sticker-dot" style="background: #3498db;"></div>
-                        <span><strong>Devis envoyé</strong> - En attente</span>
+                        <span><strong>Devis envoyé</strong></span>
                     </div>
                     <div class="sticker-legend-item">
                         <div class="sticker-dot" style="background: #2c3e50;"></div>
-                        <span><strong>Signé</strong> - Finalisé</span>
+                        <span><strong>Signé</strong></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PANNEAU HISTORIQUE -->
         <div class="historique-panel no-print">
             <div class="historique-title">
                 📚 Historique
@@ -991,12 +1282,8 @@
                 <div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 12px;">Aucune semaine clôturée</div>
             </div>
             
-            <!-- NOUVELLE SECTION : STATISTIQUES DE DURÉE -->
             <div class="stats-duree-section">
-                <div class="stats-duree-title">
-                    ⏱️ Stats Durée Devis → Signature
-                </div>
-                
+                <div class="stats-duree-title">⏱️ Stats Durée Devis → Signature</div>
                 <div class="stats-duree-box">
                     <div class="stats-duree-header">📊 Temps de conversion</div>
                     <div class="stats-duree-grid">
@@ -1011,10 +1298,9 @@
                     </div>
                     <div class="stats-duree-moyenne">
                         <span class="stats-duree-moyenne-value" id="duree-moyenne">-</span>
-                        <span class="stats-duree-moyenne-label">Durée moyenne (jours)</span>
+                        <span class="stats-duree-moyenne-label">jours en moyenne</span>
                     </div>
                 </div>
-                
                 <div class="stats-duree-detail">
                     <div class="stats-duree-detail-item">
                         <span class="stats-duree-detail-label">Dossiers signés :</span>
@@ -1024,40 +1310,47 @@
                         <span class="stats-duree-detail-label">Médiane :</span>
                         <span class="stats-duree-detail-value" id="duree-mediane">-</span>
                     </div>
-                    <div class="stats-duree-detail-item">
-                        <span class="stats-duree-detail-label">Écart-type :</span>
-                        <span class="stats-duree-detail-value" id="duree-ecart-type">-</span>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 10px; padding: 8px; background: #e8f4f8; border-radius: 6px; font-size: 10px; color: #555; line-height: 1.4;">
-                    <strong>💡 Info :</strong> Les statistiques sont calculées uniquement sur les dossiers ayant une date de demande et une date de signature renseignées.
                 </div>
             </div>
             
-            <button class="btn-cloturer" onclick="cloturerSemaine()">
-                ✅ Clôturer la semaine
-            </button>
-            
-            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 11px; color: #555; line-height: 1.4;">
-                <strong>💡 Astuce :</strong><br>
-                Cliquez sur "Clôturer la semaine" pour archiver les chiffres et repartir à zéro. Les fiches restent en place pour continuer le suivi.
-            </div>
+            <button class="btn-cloturer" onclick="cloturerSemaine()">✅ Clôturer la semaine</button>
         </div>
     </div>
 
-    <!-- MODAL FICHE -->
-    <div id="modal" class="modal no-print">
+    <!-- Bouton Micro -->
+    <div class="mic-container no-print">
+        <div class="mic-hint" id="micHint">Appuyez pour parler</div>
+        <button class="mic-button" id="micBtn" onclick="toggleVoice()">🎤</button>
+    </div>
+
+    <!-- Modal Voice -->
+    <div class="voice-modal no-print" id="voiceModal">
+        <button class="voice-close" onclick="stopVoice()">✕</button>
+        <div class="voice-visualizer">
+            <div class="voice-waves"></div>
+            🎤
+        </div>
+        <div class="voice-text" id="voiceText">Appuyez sur le micro et parlez...</div>
+        <div class="voice-commands">
+            <div class="voice-commands-title">Commandes disponibles</div>
+            <div class="voice-command-item">🎙️ "Nouveau client [Nom] [Type]"</div>
+            <div class="voice-command-item">📝 "Note à [Nom] : [texte]"</div>
+            <div class="voice-command-item">➡️ "Déplacer [Nom] vers [statut]"</div>
+        </div>
+    </div>
+
+    <!-- Modal Édition -->
+    <div class="modal no-print" id="modal">
         <div class="modal-content">
             <div class="modal-header" id="modalTitle">📝 Nouvelle fiche</div>
-            <form id="fiche-form">
-                <input type="hidden" id="edit-id" value="">
+            <form id="fiche-form" onsubmit="saveForm(event)">
+                <input type="hidden" id="edit-id">
                 <div class="form-group">
                     <label>Nom client</label>
                     <input type="text" id="client-name" required>
                 </div>
                 <div class="form-group">
-                    <label>Type de contrat</label>
+                    <label>Type</label>
                     <select id="client-type">
                         <option value="Auto">🚗 Auto</option>
                         <option value="Santé">🏥 Santé</option>
@@ -1075,11 +1368,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Notes / Actions</label>
-                    <textarea id="client-notes" placeholder="Relancer jeudi matin..."></textarea>
+                    <label>Notes</label>
+                    <textarea id="client-notes" rows="3"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Stickers d'action (cliquez pour sélectionner plusieurs)</label>
+                    <label>Stickers</label>
                     <div class="sticker-selector" id="stickerSelector">
                         <div class="sticker-option" style="background: #e74c3c;" data-color="red" onclick="toggleSticker(this)"></div>
                         <div class="sticker-option" style="background: #f39c12;" data-color="orange" onclick="toggleSticker(this)"></div>
@@ -1089,223 +1382,560 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-delete" id="btnDelete" onclick="supprimerFiche()" style="display: none;">🗑️ Supprimer</button>
-                    <button type="button" class="btn-cancel" onclick="fermerModal()">Annuler</button>
-                    <button type="submit" class="btn-save">💾 Enregistrer</button>
+                    <button type="button" class="btn btn-delete" id="btnDelete" onclick="supprimerFiche()" style="display:none;">🗑️</button>
+                    <button type="button" class="btn btn-cancel" onclick="fermerModal()">Annuler</button>
+                    <button type="submit" class="btn btn-save">💾 Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL AIDE -->
-    <div id="modal-aide" class="modal no-print">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">❓ Comment utiliser le Tableau Obeya</div>
-            <div class="help-content">
-                <h3><span class="help-icon">➕</span>Ajouter une fiche</h3>
-                <ul>
-                    <li>Cliquez sur <strong>"+ Ajouter"</strong> dans la colonne <strong>Semaine N</strong></li>
-                    <li>Remplissez les informations client</li>
-                    <li>Sélectionnez les stickers d'action (plusieurs possibles)</li>
-                    <li>Validez avec "Enregistrer"</li>
-                </ul>
-                
-                <h3><span class="help-icon">✋</span>Déplacer une fiche</h3>
-                <ul>
-                    <li><strong>Cliquez et maintenez</strong> la fiche</li>
-                    <li><strong>Glissez-la</strong> vers une autre colonne</li>
-                    <li>La case devient verte quand vous pouvez déposer</li>
-                    <li><strong>Logique :</strong> N → N+1 → N+2 → Parking si retard</li>
-                </ul>
-                
-                <h3><span class="help-icon">✏️</span>Modifier une fiche</h3>
-                <ul>
-                    <li><strong>Double-cliquez</strong> sur la fiche</li>
-                    <li>Ou cliquez sur le crayon ✏️</li>
-                    <li>Modifiez les informations et stickers</li>
-                </ul>
-                
-                <h3><span class="help-icon">🗑️</span>Supprimer une fiche</h3>
-                <ul>
-                    <li><strong>Glissez la fiche vers le bas</strong> de l'écran</li>
-                    <li>Une zone rouge apparaît</li>
-                    <li>Relâchez pour supprimer définitivement</li>
-                </ul>
-                
-                <h3><span class="help-icon">📊</span>Clôturer la semaine</h3>
-                <ul>
-                    <li>Cliquez sur <strong>"Clôturer la semaine"</strong> dans le panneau historique</li>
-                    <li>Les chiffres sont archivés</li>
-                    <li>Les compteurs repartent à zéro</li>
-                    <li>Les fiches restent en place pour le suivi</li>
-                </ul>
-                
-                <h3><span class="help-icon">🏷️</span>Légende des stickers</h3>
-                <ul>
-                    <li>🔴 <strong>Rouge</strong> : Relancer le client</li>
-                    <li>🟠 <strong>Orange</strong> : Rappeler (attente retour)</li>
-                    <li>🟡 <strong>Jaune</strong> : Voir avec la compagnie</li>
-                    <li>🔵 <strong>Bleu</strong> : Devis envoyé, en attente</li>
-                    <li>⚫ <strong>Noir</strong> : Signé, finalisé</li>
-                </ul>
-            </div>
-            <div class="form-actions" style="margin-top: 20px;">
-                <button type="button" class="btn-save" onclick="fermerAide()">Fermer</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Variables globales
-        let currentStatus = '';
-        let currentWeek = '';
-        let editingCard = null;
-        let selectedStickers = [];
-        let draggedCard = null;
+        let currentStatus = '', currentWeek = '', editingCard = null, selectedStickers = [], draggedCard = null;
+        let currentWeekData = { numero: 0, debut: '', fin: '', demandes: 0, envoyes: 0, signes: 0, euros: 0 };
+        let historiqueSemaines = [], clients = [], recognition = null, isListening = false;
+        let deferredPrompt = null;
         
-        let currentWeekData = {
-            numero: 0,
-            debut: '',
-            fin: '',
-            demandes: 0,
-            envoyes: 0,
-            signes: 0,
-            euros: 0
-        };
-        
-        let historiqueSemaines = [];
-        
-        const stickerColors = {
-            'red': '#e74c3c',
-            'orange': '#f39c12',
-            'yellow': '#f1c40f',
-            'blue': '#3498db',
-            'black': '#2c3e50'
-        };
+        const stickerColors = { red: '#e74c3c', orange: '#f39c12', yellow: '#f1c40f', blue: '#3498db', black: '#2c3e50' };
 
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
             initDates();
             initDragAndDrop();
+            initTouchEvents();
+            initSpeechRecognition();
+            initPWA();
             chargerDonnees();
             calculerSynthese();
             afficherHistorique();
-            calculerStatsDuree(); // NOUVEAU : Calculer les stats de durée au chargement
+            calculerStatsDuree();
+            scannerClientsExistants();
         });
+
+        // PWA - Installation
+        function initPWA() {
+            // Gestion du beforeinstallprompt pour Chrome/Android
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // Afficher le bouton d'installation après 3 secondes
+                setTimeout(() => {
+                    if (!window.matchMedia('(display-mode: standalone)').matches) {
+                        document.getElementById('installPrompt').classList.add('show');
+                    }
+                }, 3000);
+            });
+
+            // Détection si déjà installé
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                console.log('App déjà installée');
+            }
+
+            // Service Worker simplifié pour offline
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `)).catch(() => console.log('SW non enregistré'));
+            }
+        }
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('✅ Application installée !');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installPrompt').classList.remove('show');
+                });
+            } else {
+                // Fallback pour iOS
+                showToast('📱 Sur iOS : Partager → "Sur l\'écran d\'accueil"');
+            }
+        }
+
+        function dismissInstall() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
 
         function initDates() {
             const today = new Date();
             const currentDay = today.getDay();
             const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-            
             const lundi = new Date(today.setDate(diff));
             const dimanche = new Date(today.setDate(lundi.getDate() + 6));
-            
             const debutAnnee = new Date(lundi.getFullYear(), 0, 1);
             const jours = Math.floor((lundi - debutAnnee) / (24 * 60 * 60 * 1000));
             const numeroSemaine = Math.ceil(jours / 7);
-            
             const formatDate = (d) => d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: '2-digit'});
             
-            currentWeekData.numero = numeroSemaine;
-            currentWeekData.debut = formatDate(lundi);
-            currentWeekData.fin = formatDate(dimanche);
-            
+            currentWeekData = { ...currentWeekData, numero: numeroSemaine, debut: formatDate(lundi), fin: formatDate(dimanche) };
             document.getElementById('num-semaine').value = numeroSemaine;
             document.getElementById('date-debut').value = currentWeekData.debut;
             document.getElementById('date-fin').value = currentWeekData.fin;
         }
 
+        // Speech Recognition - VERSION CORRIGÉE
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                showToast('⚠️ Reconnaissance vocale non supportée');
+                document.getElementById('micBtn').style.display = 'none';
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('micBtn').classList.add('listening');
+                document.getElementById('voiceModal').classList.add('active');
+                document.getElementById('voiceText').textContent = 'Écoute en cours... Parlez maintenant';
+                console.log('Reconnaissance démarrée');
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                if (interimTranscript) {
+                    document.getElementById('voiceText').textContent = interimTranscript;
+                }
+
+                if (finalTranscript) {
+                    console.log('Transcription finale:', finalTranscript);
+                    document.getElementById('voiceText').textContent = finalTranscript;
+                    processVoiceCommand(finalTranscript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur reconnaissance:', event.error);
+                let msg = 'Erreur de reconnaissance';
+                
+                switch(event.error) {
+                    case 'not-allowed':
+                        msg = '⚠️ Autorisez le micro dans les paramètres';
+                        break;
+                    case 'no-speech':
+                        msg = 'Aucune parole détectée. Réessayez.';
+                        break;
+                    case 'network':
+                        msg = 'Problème réseau. Vérifiez votre connexion.';
+                        break;
+                    case 'aborted':
+                        msg = 'Reconnaissance annulée';
+                        break;
+                    default:
+                        msg = 'Erreur: ' + event.error;
+                }
+                
+                showToast(msg);
+                
+                // Ne pas arrêter complètement sur erreur non fatale
+                if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
+                    setTimeout(() => {
+                        if (isListening) {
+                            try { recognition.start(); } catch(e) {}
+                        }
+                    }, 1000);
+                } else {
+                    stopVoice();
+                }
+            };
+
+            recognition.onend = () => {
+                console.log('Reconnaissance terminée');
+                // Redémarrer automatiquement si on est toujours en mode écoute
+                if (isListening) {
+                    try {
+                        recognition.start();
+                    } catch(e) {
+                        stopVoice();
+                    }
+                }
+            };
+        }
+
+        async function toggleVoice() {
+            if (!recognition) {
+                showToast('Reconnaissance vocale non disponible');
+                return;
+            }
+
+            if (isListening) {
+                stopVoice();
+            } else {
+                try {
+                    // Demander explicitement la permission sur mobile
+                    if (navigator.permissions && navigator.permissions.query) {
+                        const result = await navigator.permissions.query({ name: 'microphone' });
+                        if (result.state === 'denied') {
+                            showToast('⚠️ Autorisez le micro dans les paramètres de votre navigateur');
+                            return;
+                        }
+                    }
+                    
+                    // Sur iOS, il faut parfois un user gesture explicite
+                    recognition.start();
+                } catch (err) {
+                    console.error('Erreur démarrage:', err);
+                    showToast('Erreur démarrage micro. Réessayez.');
+                    
+                    // Fallback : recréer l'instance
+                    initSpeechRecognition();
+                    setTimeout(() => {
+                        try { recognition.start(); } catch(e) {}
+                    }, 500);
+                }
+            }
+        }
+
+        function stopVoice() {
+            isListening = false;
+            document.getElementById('micBtn').classList.remove('listening');
+            document.getElementById('voiceModal').classList.remove('active');
+            if (recognition) {
+                try { recognition.stop(); } catch(e) {}
+            }
+        }
+
+        // Traitement commandes vocales
+        function processVoiceCommand(text) {
+            const lowerText = text.toLowerCase().trim();
+            console.log('Commande:', lowerText);
+
+            // Nouveau client
+            const nouveauMatch = lowerText.match(/(?:nouveau|créer|ajouter|nouvelle)\s+(?:client|cliente)?\s*(\w+)(?:\s+(auto|santé|gav|mrh|dab|collective|sante))?(?:\s+(particulier|pro|professionnel|entreprise))?/i);
+            if (nouveauMatch) {
+                const nom = capitalize(nouveauMatch[1]);
+                let type = 'Auto';
+                if (nouveauMatch[2]) {
+                    const t = nouveauMatch[2].toLowerCase();
+                    if (t.includes('sant')) type = 'Santé';
+                    else if (t.includes('gav')) type = 'GAV';
+                    else if (t.includes('mrh')) type = 'MRH';
+                    else if (t.includes('dab')) type = 'DAB';
+                    else if (t.includes('collect')) type = 'Collective';
+                }
+                const cat = (nouveauMatch[3] && nouveauMatch[3].includes('pro')) ? 'PRO' : 'PART';
+                
+                stopVoice();
+                setTimeout(() => createClientFromVoice(nom, type, cat), 300);
+                return;
+            }
+
+            // Ajouter note
+            const noteMatch = lowerText.match(/(?:ajouter|ajoute|note|noter)\s+(?:une\s+)?(?:note\s+)?(?:à|a|sur)\s+(\w+)[\s:]+(.+)/i);
+            if (noteMatch) {
+                const nom = capitalize(noteMatch[1]);
+                const note = noteMatch[2];
+                stopVoice();
+                addNoteToClient(nom, note);
+                return;
+            }
+
+            // Déplacer
+            const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move)\s+(\w+)\s+(?:vers|dans|en|au)?\s*(demandes?|en cours|envoyés?|signés?|parking)/i);
+            if (deplaceMatch) {
+                const nom = capitalize(deplaceMatch[1]);
+                let status = deplaceMatch[2].toLowerCase();
+                if (status.includes('demand')) status = 'demandes';
+                else if (status.includes('cours')) status = 'devis';
+                else if (status.includes('envoy')) status = 'envoyes';
+                else if (status.includes('sign')) status = 'signes';
+                else if (status.includes('park')) status = 'parking';
+                
+                stopVoice();
+                moveClientByName(nom, status);
+                return;
+            }
+
+            showToast('❓ Commande non reconnue. Essayez: "Nouveau client Dupont Auto"');
+            setTimeout(stopVoice, 2000);
+        }
+
+        function createClientFromVoice(nom, type, cat) {
+            const card = document.createElement('div');
+            card.className = 'client-slot new';
+            card.draggable = true;
+            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            
+            card.innerHTML = `
+                <div class="slot-header">
+                    <span class="slot-name">${nom}</span>
+                    <span class="slot-edit no-print">✏️</span>
+                </div>
+                <div class="slot-type">${cat} - ${type}</div>
+                <div class="slot-dates" data-demande="${today}">
+                    <div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${today}</div>
+                </div>
+                <div class="slot-stickers"></div>
+            `;
+            
+            makeDraggable(card);
+            card.querySelector('.slot-edit').addEventListener('click', (e) => {
+                e.stopPropagation();
+                editerFiche(card);
+            });
+            
+            const cell = document.querySelector('td[data-week="N"][data-status="demandes"]');
+            const btn = cell.querySelector('.add-slot-btn');
+            cell.insertBefore(card, btn);
+            
+            clients.push({nom: nom, element: card});
+            calculerSynthese();
+            calculerStatsDuree();
+            showToast(`✅ Client ${nom} créé`);
+            card.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+
+        function addNoteToClient(nom, note) {
+            const allCards = document.querySelectorAll('.client-slot');
+            let found = false;
+            
+            allCards.forEach(card => {
+                const nameEl = card.querySelector('.slot-name');
+                if (nameEl && nameEl.textContent.toLowerCase() === nom.toLowerCase()) {
+                    let notesEl = card.querySelector('.slot-notes');
+                    if (!notesEl) {
+                        notesEl = document.createElement('div');
+                        notesEl.className = 'slot-notes';
+                        const datesDiv = card.querySelector('.slot-dates');
+                        card.insertBefore(notesEl, datesDiv ? datesDiv.nextSibling : null);
+                    }
+                    
+                    const timestamp = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                    const existing = notesEl.textContent;
+                    notesEl.textContent = existing ? `${existing} | ${timestamp}: ${note}` : `${timestamp}: ${note}`;
+                    
+                    found = true;
+                    card.style.background = '#fff3cd';
+                    setTimeout(() => card.style.background = '', 1000);
+                }
+            });
+            
+            showToast(found ? `📝 Note ajoutée à ${nom}` : `❌ Client ${nom} non trouvé`);
+        }
+
+        function moveClientByName(nom, newStatus) {
+            const allCards = document.querySelectorAll('.client-slot');
+            let found = false;
+            
+            allCards.forEach(card => {
+                const nameEl = card.querySelector('.slot-name');
+                if (nameEl && nameEl.textContent.toLowerCase() === nom.toLowerCase()) {
+                    const targetCell = document.querySelector(`td[data-week="N"][data-status="${newStatus}"]`);
+                    if (targetCell) {
+                        const btn = targetCell.querySelector('.add-slot-btn') || targetCell.querySelector('.no-add');
+                        targetCell.insertBefore(card, btn);
+                        mettreAJourDate(card, newStatus);
+                        found = true;
+                    }
+                }
+            });
+            
+            if (found) {
+                calculerSynthese();
+                calculerStatsDuree();
+                showToast(`✅ ${nom} déplacé`);
+            } else {
+                showToast(`❌ Client ${nom} non trouvé`);
+            }
+        }
+
+        // Drag & Drop + Touch
+        function initDragAndDrop() {
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+                zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+                zone.addEventListener('drop', handleDrop);
+            });
+
+            document.addEventListener('dragover', (e) => {
+                const deleteZone = document.getElementById('deleteZone');
+                if (draggedCard && e.clientY > window.innerHeight - 150) {
+                    deleteZone.classList.add('active');
+                } else {
+                    deleteZone.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('drop', (e) => {
+                if (draggedCard && e.clientY > window.innerHeight - 150) {
+                    draggedCard.remove();
+                    document.getElementById('deleteZone').classList.remove('active');
+                    draggedCard = null;
+                    calculerSynthese();
+                    calculerStatsDuree();
+                }
+            });
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedCard) {
+                const btn = this.querySelector('.add-slot-btn') || this.querySelector('.no-add');
+                this.insertBefore(draggedCard, btn);
+                draggedCard.classList.remove('dragging');
+                mettreAJourDate(draggedCard, this.dataset.status);
+                draggedCard = null;
+                calculerSynthese();
+                calculerStatsDuree();
+            }
+        }
+
+        function initTouchEvents() {
+            let touchItem = null, touchOffset = {x: 0, y: 0}, originalParent = null;
+            
+            document.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.client-slot')) {
+                    touchItem = e.target.closest('.client-slot');
+                    const touch = e.touches[0];
+                    const rect = touchItem.getBoundingClientRect();
+                    touchOffset.x = touch.clientX - rect.left;
+                    touchOffset.y = touch.clientY - rect.top;
+                    originalParent = touchItem.parentNode;
+                    
+                    touchItem.style.position = 'fixed';
+                    touchItem.style.zIndex = '1000';
+                    touchItem.style.width = rect.width + 'px';
+                    touchItem.classList.add('dragging');
+                }
+            }, {passive: false});
+
+            document.addEventListener('touchmove', (e) => {
+                if (!touchItem) return;
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                touchItem.style.left = (touch.clientX - touchOffset.x) + 'px';
+                touchItem.style.top = (touch.clientY - touchOffset.y) + 'px';
+                
+                const deleteZone = document.getElementById('deleteZone');
+                if (touch.clientY > window.innerHeight - 150) {
+                    deleteZone.classList.add('active');
+                } else {
+                    deleteZone.classList.remove('active');
+                }
+            }, {passive: false});
+
+            document.addEventListener('touchend', (e) => {
+                if (!touchItem) return;
+                
+                const touch = e.changedTouches[0];
+                const deleteZone = document.getElementById('deleteZone');
+                
+                if (touch.clientY > window.innerHeight - 150) {
+                    touchItem.remove();
+                    showToast('🗑️ Fiche supprimée');
+                } else {
+                    touchItem.style.display = 'none';
+                    const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                    touchItem.style.display = '';
+                    
+                    const dropZone = elemBelow?.closest('.drop-zone');
+                    if (dropZone && !dropZone.classList.contains('read-only')) {
+                        const btn = dropZone.querySelector('.add-slot-btn') || dropZone.querySelector('.no-add');
+                        dropZone.insertBefore(touchItem, btn);
+                        mettreAJourDate(touchItem, dropZone.dataset.status);
+                    } else {
+                        originalParent.appendChild(touchItem);
+                    }
+                }
+                
+                touchItem.style.position = '';
+                touchItem.style.zIndex = '';
+                touchItem.style.left = '';
+                touchItem.style.top = '';
+                touchItem.style.width = '';
+                touchItem.classList.remove('dragging');
+                deleteZone.classList.remove('active');
+                
+                touchItem = null;
+                calculerSynthese();
+                calculerStatsDuree();
+            });
+        }
+
+        function mettreAJourDate(card, newStatus) {
+            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            let datesDiv = card.querySelector('.slot-dates');
+            
+            if (!datesDiv) {
+                datesDiv = document.createElement('div');
+                datesDiv.className = 'slot-dates';
+                card.insertBefore(datesDiv, card.querySelector('.slot-stickers'));
+            }
+            
+            let dateDemande = datesDiv.dataset.demande || '';
+            let dateDevis = datesDiv.dataset.devis || '';
+            let dateEnvoye = datesDiv.dataset.envoye || '';
+            let dateSigne = datesDiv.dataset.signe || '';
+            
+            if (newStatus === 'demandes' && !dateDemande) { dateDemande = today; datesDiv.dataset.demande = today; }
+            else if (newStatus === 'devis' && !dateDevis) { dateDevis = today; datesDiv.dataset.devis = today; }
+            else if (newStatus === 'envoyes' && !dateEnvoye) { dateEnvoye = today; datesDiv.dataset.envoye = today; }
+            else if (newStatus === 'signes' && !dateSigne) { dateSigne = today; datesDiv.dataset.signe = today; }
+            
+            let html = '';
+            if (dateDemande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${dateDemande}</div>`;
+            if (dateDevis) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${dateDevis}</div>`;
+            if (dateEnvoye) html += `<div class="slot-date-item"><span class="slot-date-label">🟣 Envoyé:</span> ${dateEnvoye}</div>`;
+            if (dateSigne) html += `<div class="slot-date-item"><span class="slot-date-label">🟢 Signé:</span> ${dateSigne}</div>`;
+            
+            datesDiv.innerHTML = html;
+        }
+
+        function makeDraggable(card) {
+            card.draggable = true;
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                draggedCard = null;
+                document.getElementById('deleteZone').classList.remove('active');
+            });
+            card.addEventListener('dblclick', () => editerFiche(card));
+        }
+
+        // Fonctions existantes
         function chargerDonnees() {
             const saved = localStorage.getItem('obeya_historique_semaines');
-            if (saved) {
-                historiqueSemaines = JSON.parse(saved);
-            }
+            if (saved) historiqueSemaines = JSON.parse(saved);
         }
 
         function sauvegarderDonnees() {
             localStorage.setItem('obeya_historique_semaines', JSON.stringify(historiqueSemaines));
         }
 
-        // NOUVELLE FONCTION : Calculer les statistiques de durée
-        function calculerStatsDuree() {
-            const cardsSignees = document.querySelectorAll('[data-status="signes"] .client-slot');
-            const durees = [];
-            
-            cardsSignees.forEach(card => {
-                const datesDiv = card.querySelector('.slot-dates');
-                if (datesDiv) {
-                    const dateDemande = datesDiv.dataset.demande;
-                    const dateSigne = datesDiv.dataset.signe;
-                    
-                    if (dateDemande && dateSigne) {
-                        const d1 = parseDateFr(dateDemande);
-                        const d2 = parseDateFr(dateSigne);
-                        
-                        if (d1 && d2) {
-                            const diffTime = Math.abs(d2 - d1);
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            durees.push(diffDays);
-                        }
-                    }
-                }
-            });
-            
-            if (durees.length === 0) {
-                document.getElementById('duree-min').textContent = '-';
-                document.getElementById('duree-max').textContent = '-';
-                document.getElementById('duree-moyenne').textContent = '-';
-                document.getElementById('nb-dossiers-signes').textContent = '0';
-                document.getElementById('duree-mediane').textContent = '-';
-                document.getElementById('duree-ecart-type').textContent = '-';
-                return;
-            }
-            
-            // Calculs statistiques
-            const min = Math.min(...durees);
-            const max = Math.max(...durees);
-            const moyenne = (durees.reduce((a, b) => a + b, 0) / durees.length).toFixed(1);
-            const mediane = calculerMediane(durees);
-            const ecartType = calculerEcartType(durees).toFixed(1);
-            
-            // Mise à jour de l'affichage
-            document.getElementById('duree-min').textContent = min + 'j';
-            document.getElementById('duree-max').textContent = max + 'j';
-            document.getElementById('duree-moyenne').textContent = moyenne;
-            document.getElementById('nb-dossiers-signes').textContent = durees.length;
-            document.getElementById('duree-mediane').textContent = mediane + 'j';
-            document.getElementById('duree-ecart-type').textContent = ecartType + 'j';
-        }
-        
-        // Fonction utilitaire : parser une date française (DD/MM ou DD/MM/YY)
-        function parseDateFr(dateStr) {
-            const parts = dateStr.split('/');
-            if (parts.length >= 2) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const year = parts[2] ? parseInt(parts[2], 10) + 2000 : new Date().getFullYear();
-                return new Date(year, month, day);
-            }
-            return null;
-        }
-        
-        // Fonction utilitaire : calculer la médiane
-        function calculerMediane(arr) {
-            const sorted = [...arr].sort((a, b) => a - b);
-            const mid = Math.floor(sorted.length / 2);
-            return sorted.length % 2 !== 0 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2).toFixed(1);
-        }
-        
-        // Fonction utilitaire : calculer l'écart-type
-        function calculerEcartType(arr) {
-            const moyenne = arr.reduce((a, b) => a + b, 0) / arr.length;
-            const variance = arr.reduce((a, b) => a + Math.pow(b - moyenne, 2), 0) / arr.length;
-            return Math.sqrt(variance);
-        }
-
         function cloturerSemaine() {
-            if (!confirm('Clôturer la semaine et archiver les chiffres ?\n\nLes fiches resteront en place pour le suivi.')) {
-                return;
-            }
+            if (!confirm('Clôturer la semaine ?')) return;
             
             const semaineArchive = {
                 numero: currentWeekData.numero,
@@ -1321,15 +1951,8 @@
             historiqueSemaines.unshift(semaineArchive);
             sauvegarderDonnees();
             
-            currentWeekData = {
-                numero: currentWeekData.numero + 1,
-                debut: '',
-                fin: '',
-                demandes: 0,
-                envoyes: 0,
-                signes: 0,
-                euros: 0
-            };
+            currentWeekData.numero++;
+            currentWeekData.demandes = currentWeekData.envoyes = currentWeekData.signes = 0;
             
             document.getElementById('num-semaine').value = currentWeekData.numero;
             document.getElementById('synth-demandes').value = 0;
@@ -1337,19 +1960,9 @@
             document.getElementById('synth-signes').value = 0;
             document.getElementById('synth-euros').value = 0;
             
-            const today = new Date();
-            const lundi = new Date(today.setDate(today.getDate() - today.getDay() + 1 + (currentWeekData.numero - 1) * 7));
-            const dimanche = new Date(today.setDate(lundi.getDate() + 6));
-            const formatDate = (d) => d.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: '2-digit'});
-            
-            currentWeekData.debut = formatDate(lundi);
-            currentWeekData.fin = formatDate(dimanche);
-            document.getElementById('date-debut').value = currentWeekData.debut;
-            document.getElementById('date-fin').value = currentWeekData.fin;
-            
             afficherHistorique();
-            calculerStatsDuree(); // Recalculer les stats après clôture
-            alert('Semaine clôturée avec succès !\nNouvelle semaine : ' + currentWeekData.numero);
+            calculerStatsDuree();
+            showToast('✅ Semaine clôturée');
         }
 
         function afficherHistorique() {
@@ -1357,13 +1970,12 @@
             container.innerHTML = '';
             
             if (historiqueSemaines.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 12px;">Aucune semaine clôturée</div>';
+                container.innerHTML = '<div style="text-align: center; color: #95a5a6; padding: 20px;">Aucune semaine clôturée</div>';
                 return;
             }
             
             historiqueSemaines.forEach((semaine) => {
-                const tauxConversion = semaine.demandes > 0 ? Math.round((semaine.signes / semaine.demandes) * 100) : 0;
-                
+                const taux = semaine.demandes > 0 ? Math.round((semaine.signes / semaine.demandes) * 100) : 0;
                 const div = document.createElement('div');
                 div.className = 'historique-week';
                 div.innerHTML = `
@@ -1372,244 +1984,137 @@
                         <span class="historique-week-date">${semaine.debut} - ${semaine.fin}</span>
                     </div>
                     <div class="historique-stats">
-                        <div class="historique-stat">
-                            <div class="historique-stat-value">${semaine.demandes}</div>
-                            <div class="historique-stat-label">Demandés</div>
-                        </div>
-                        <div class="historique-stat">
-                            <div class="historique-stat-value">${semaine.envoyes}</div>
-                            <div class="historique-stat-label">Envoyés</div>
-                        </div>
-                        <div class="historique-stat">
-                            <div class="historique-stat-value">${semaine.signes}</div>
-                            <div class="historique-stat-label">Signés</div>
-                        </div>
-                        <div class="historique-stat">
-                            <div class="historique-stat-value">${semaine.euros}€</div>
-                            <div class="historique-stat-label">CA</div>
-                        </div>
+                        <div class="historique-stat"><div class="historique-stat-value">${semaine.demandes}</div><div class="historique-stat-label">Demandés</div></div>
+                        <div class="historique-stat"><div class="historique-stat-value">${semaine.envoyes}</div><div class="historique-stat-label">Envoyés</div></div>
+                        <div class="historique-stat"><div class="historique-stat-value">${semaine.signes}</div><div class="historique-stat-label">Signés</div></div>
+                        <div class="historique-stat"><div class="historique-stat-value">${semaine.euros}€</div><div class="historique-stat-label">CA</div></div>
                     </div>
-                    <div class="historique-taux">
-                        Taux de conversion : <strong>${tauxConversion}%</strong>
-                    </div>
+                    <div class="historique-taux">Taux de conversion : <strong>${taux}%</strong></div>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function initDragAndDrop() {
-            const dropZones = document.querySelectorAll('.drop-zone');
-            const deleteZone = document.getElementById('deleteZone');
+        function calculerStatsDuree() {
+            const cardsSignees = document.querySelectorAll('[data-status="signes"] .client-slot');
+            const durees = [];
             
-            dropZones.forEach(zone => {
-                zone.addEventListener('dragover', handleDragOver);
-                zone.addEventListener('dragleave', handleDragLeave);
-                zone.addEventListener('drop', handleDrop);
-            });
-            
-            document.addEventListener('dragover', function(e) {
-                if (draggedCard && e.clientY > window.innerHeight - 100) {
-                    deleteZone.classList.add('active');
-                } else {
-                    deleteZone.classList.remove('active');
+            cardsSignees.forEach(card => {
+                const datesDiv = card.querySelector('.slot-dates');
+                if (datesDiv) {
+                    const d1 = parseDateFr(datesDiv.dataset.demande);
+                    const d2 = parseDateFr(datesDiv.dataset.signe);
+                    if (d1 && d2) durees.push(Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)));
                 }
             });
             
-            document.addEventListener('drop', function(e) {
-                if (draggedCard && e.clientY > window.innerHeight - 100) {
-                    draggedCard.remove();
-                    deleteZone.classList.remove('active');
-                    draggedCard = null;
-                    calculerSynthese();
-                    calculerStatsDuree(); // Recalculer les stats après suppression
-                }
-            });
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            this.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            this.classList.remove('drag-over');
-            
-            if (draggedCard) {
-                const btn = this.querySelector('.add-slot-btn') || this.querySelector('.no-add');
-                this.insertBefore(draggedCard, btn);
-                draggedCard.classList.remove('dragging');
-                
-                // Mettre à jour la date selon la nouvelle colonne
-                const newStatus = this.dataset.status;
-                mettreAJourDate(draggedCard, newStatus);
-                
-                draggedCard = null;
-                calculerSynthese();
-                calculerStatsDuree(); // Recalculer les stats après déplacement
-            }
-        }
-
-        function mettreAJourDate(card, newStatus) {
-            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
-            let datesDiv = card.querySelector('.slot-dates');
-            
-            if (!datesDiv) {
-                datesDiv = document.createElement('div');
-                datesDiv.className = 'slot-dates';
-                card.insertBefore(datesDiv, card.querySelector('.slot-stickers'));
+            if (durees.length === 0) {
+                ['duree-min', 'duree-max', 'duree-moyenne', 'duree-mediane'].forEach(id => document.getElementById(id).textContent = '-');
+                document.getElementById('nb-dossiers-signes').textContent = '0';
+                return;
             }
             
-            // Récupérer les dates existantes
-            let dateDemande = datesDiv.dataset.demande || '';
-            let dateDevis = datesDiv.dataset.devis || '';
-            let dateEnvoye = datesDiv.dataset.envoye || '';
-            let dateSigne = datesDiv.dataset.signe || '';
-            
-            // Mettre à jour selon le statut
-            if (newStatus === 'demandes' && !dateDemande) {
-                dateDemande = today;
-                datesDiv.dataset.demande = dateDemande;
-            } else if (newStatus === 'devis' && !dateDevis) {
-                dateDevis = today;
-                datesDiv.dataset.devis = dateDevis;
-            } else if (newStatus === 'envoyes' && !dateEnvoye) {
-                dateEnvoye = today;
-                datesDiv.dataset.envoye = dateEnvoye;
-            } else if (newStatus === 'signes' && !dateSigne) {
-                dateSigne = today;
-                datesDiv.dataset.signe = dateSigne;
-            }
-            
-            // Reconstruire l'affichage des dates
-            let html = '';
-            if (dateDemande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${dateDemande}</div>`;
-            if (dateDevis) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${dateDevis}</div>`;
-            if (dateEnvoye) html += `<div class="slot-date-item"><span class="slot-date-label">🟣 Envoyé:</span> ${dateEnvoye}</div>`;
-            if (dateSigne) html += `<div class="slot-date-item"><span class="slot-date-label">🟢 Signé:</span> ${dateSigne}</div>`;
-            
-            datesDiv.innerHTML = html;
+            document.getElementById('duree-min').textContent = Math.min(...durees) + 'j';
+            document.getElementById('duree-max').textContent = Math.max(...durees) + 'j';
+            document.getElementById('duree-moyenne').textContent = (durees.reduce((a, b) => a + b, 0) / durees.length).toFixed(1);
+            document.getElementById('duree-mediane').textContent = calculerMediane(durees) + 'j';
+            document.getElementById('nb-dossiers-signes').textContent = durees.length;
         }
 
-        function makeDraggable(card) {
-            card.draggable = true;
-            
-            card.addEventListener('dragstart', function(e) {
-                draggedCard = this;
-                this.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-            
-            card.addEventListener('dragend', function() {
-                this.classList.remove('dragging');
-                draggedCard = null;
-                document.getElementById('deleteZone').classList.remove('active');
-            });
-            
-            card.addEventListener('dblclick', function() {
-                editerFiche(this);
-            });
+        function parseDateFr(str) {
+            if (!str) return null;
+            const [d, m, y] = str.split('/').map(Number);
+            return new Date(y ? y + 2000 : new Date().getFullYear(), m - 1, d);
+        }
+
+        function calculerMediane(arr) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : ((sorted[mid - 1] + sorted[mid]) / 2).toFixed(1);
         }
 
         function calculerSynthese() {
-            const demandesActuelles = document.querySelectorAll('[data-status="demandes"] .client-slot').length;
-            const envoyesActuels = document.querySelectorAll('[data-status="envoyes"] .client-slot').length;
-            const signesActuels = document.querySelectorAll('[data-status="signes"] .client-slot').length;
+            const d = document.querySelectorAll('[data-status="demandes"] .client-slot').length;
+            const e = document.querySelectorAll('[data-status="envoyes"] .client-slot').length;
+            const s = document.querySelectorAll('[data-status="signes"] .client-slot').length;
             
-            if (demandesActuelles > currentWeekData.demandes) currentWeekData.demandes = demandesActuelles;
-            if (envoyesActuels > currentWeekData.envoyes) currentWeekData.envoyes = envoyesActuels;
-            if (signesActuels > currentWeekData.signes) currentWeekData.signes = signesActuels;
+            if (d > currentWeekData.demandes) currentWeekData.demandes = d;
+            if (e > currentWeekData.envoyes) currentWeekData.envoyes = e;
+            if (s > currentWeekData.signes) currentWeekData.signes = s;
             
             document.getElementById('synth-demandes').value = currentWeekData.demandes;
             document.getElementById('synth-envoyes').value = currentWeekData.envoyes;
             document.getElementById('synth-signes').value = currentWeekData.signes;
         }
 
+        function scannerClientsExistants() {
+            document.querySelectorAll('.client-slot').forEach(slot => {
+                const nom = slot.querySelector('.slot-name')?.textContent;
+                if (nom && !clients.find(c => c.nom === nom)) {
+                    clients.push({nom, element: slot});
+                    makeDraggable(slot);
+                }
+            });
+        }
+
+        // Modal
         function ouvrirModal(status, week) {
             if (week !== 'N' && week !== 'parking') {
-                alert('Ajout uniquement possible en Semaine N ou Parking');
+                showToast('Ajout uniquement en Semaine N ou Parking');
                 return;
             }
-            
             currentStatus = status;
             currentWeek = week;
             editingCard = null;
             selectedStickers = [];
-            
             document.getElementById('modalTitle').textContent = '📝 Nouvelle fiche';
             document.getElementById('fiche-form').reset();
             document.getElementById('edit-id').value = '';
             document.getElementById('btnDelete').style.display = 'none';
-            
-            document.querySelectorAll('.sticker-option').forEach(s => {
-                s.classList.remove('selected');
-            });
-            
-            document.getElementById('modal').style.display = 'flex';
+            document.querySelectorAll('.sticker-option').forEach(s => s.classList.remove('selected'));
+            document.getElementById('modal').classList.add('active');
         }
 
         function editerFiche(card) {
             editingCard = card;
             selectedStickers = [];
-            
-            document.getElementById('modalTitle').textContent = '✏️ Modifier la fiche';
+            document.getElementById('modalTitle').textContent = '✏️ Modifier';
             document.getElementById('btnDelete').style.display = 'inline-block';
             
             const name = card.querySelector('.slot-name').textContent;
             const typeText = card.querySelector('.slot-type').textContent;
-            const typeMatch = typeText.match(/(PART|PRO) - (.+)/);
-            const notesEl = card.querySelector('.slot-notes');
-            const notes = notesEl ? notesEl.textContent : '';
+            const match = typeText.match(/(PART|PRO) - (.+)/);
+            const notes = card.querySelector('.slot-notes')?.textContent || '';
             
             document.getElementById('client-name').value = name;
             document.getElementById('client-notes').value = notes;
-            
-            if (typeMatch) {
-                document.getElementById('client-cat').value = typeMatch[1];
-                document.getElementById('client-type').value = typeMatch[2];
+            if (match) {
+                document.getElementById('client-cat').value = match[1];
+                document.getElementById('client-type').value = match[2];
             }
             
-            const existingStickers = card.querySelectorAll('.mini-sticker');
-            const existingColors = [];
-            
-            existingStickers.forEach(sticker => {
-                const computedStyle = window.getComputedStyle(sticker);
-                const bg = computedStyle.backgroundColor;
-                
+            const existing = [];
+            card.querySelectorAll('.mini-sticker').forEach(s => {
+                const bg = window.getComputedStyle(s).backgroundColor;
                 for (let [color, hex] of Object.entries(stickerColors)) {
-                    const rgb = hexToRgb(hex);
-                    if (bg === `rgb(${rgb})` || bg === hex) {
-                        existingColors.push(color);
-                        break;
-                    }
+                    if (bg.includes(hex) || bg === `rgb(${hexToRgb(hex)})`) existing.push(color);
                 }
             });
             
             document.querySelectorAll('.sticker-option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (existingColors.includes(opt.dataset.color)) {
-                    opt.classList.add('selected');
-                    selectedStickers.push(opt.dataset.color);
-                }
+                opt.classList.toggle('selected', existing.includes(opt.dataset.color));
+                if (existing.includes(opt.dataset.color)) selectedStickers.push(opt.dataset.color);
             });
             
-            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modal').classList.add('active');
         }
 
         function hexToRgb(hex) {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return `${r}, ${g}, ${b}`;
+            return `${parseInt(hex.slice(1,3),16)}, ${parseInt(hex.slice(3,5),16)}, ${parseInt(hex.slice(5,7),16)}`;
         }
 
         function toggleSticker(el) {
             const color = el.dataset.color;
-            
             if (el.classList.contains('selected')) {
                 el.classList.remove('selected');
                 selectedStickers = selectedStickers.filter(s => s !== color);
@@ -1620,80 +2125,32 @@
         }
 
         function fermerModal() {
-            document.getElementById('modal').style.display = 'none';
+            document.getElementById('modal').classList.remove('active');
             editingCard = null;
             selectedStickers = [];
         }
 
         function supprimerFiche() {
-            if (editingCard && confirm('Supprimer cette fiche ?')) {
-                editingCard.remove();
-                calculerSynthese();
-                calculerStatsDuree(); // Recalculer les stats après suppression
-                fermerModal();
-            }
+            if (!editingCard || !confirm('Supprimer ?')) return;
+            editingCard.remove();
+            calculerSynthese();
+            calculerStatsDuree();
+            fermerModal();
+            showToast('🗑️ Supprimé');
         }
 
-        function creerStickersHtml() {
-            if (selectedStickers.length === 0) return '';
-            
-            return selectedStickers.map(color => {
-                return `<div class="mini-sticker" style="background-color: ${stickerColors[color]};"></div>`;
-            }).join('');
-        }
-
-        function creerDatesHtml(status) {
-            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
-            let html = '<div class="slot-dates"';
-            
-            let dateDemande = '';
-            let dateDevis = '';
-            let dateEnvoye = '';
-            let dateSigne = '';
-            
-            if (status === 'demandes') {
-                dateDemande = today;
-                html += ` data-demande="${today}"`;
-            } else if (status === 'devis') {
-                dateDemande = today;
-                dateDevis = today;
-                html += ` data-demande="${today}" data-devis="${today}"`;
-            } else if (status === 'envoyes') {
-                dateDemande = today;
-                dateEnvoye = today;
-                html += ` data-demande="${today}" data-envoye="${today}"`;
-            } else if (status === 'signes') {
-                dateDemande = today;
-                dateSigne = today;
-                html += ` data-demande="${today}" data-signe="${today}"`;
-            }
-            
-            html += '>';
-            
-            if (dateDemande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${dateDemande}</div>`;
-            if (dateDevis) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${dateDevis}</div>`;
-            if (dateEnvoye) html += `<div class="slot-date-item"><span class="slot-date-label">🟣 Envoyé:</span> ${dateEnvoye}</div>`;
-            if (dateSigne) html += `<div class="slot-date-item"><span class="slot-date-label">🟢 Signé:</span> ${dateSigne}</div>`;
-            
-            html += '</div>';
-            return html;
-        }
-
-        document.getElementById('fiche-form').addEventListener('submit', function(e) {
+        function saveForm(e) {
             e.preventDefault();
-            
             const name = document.getElementById('client-name').value;
             const type = document.getElementById('client-type').value;
             const cat = document.getElementById('client-cat').value;
             const notes = document.getElementById('client-notes').value;
-            
-            const stickersHtml = creerStickersHtml();
+            const stickersHtml = selectedStickers.map(c => `<div class="mini-sticker" style="background:${stickerColors[c]}"></div>`).join('');
             const datesHtml = creerDatesHtml(currentStatus);
             
             if (editingCard) {
                 editingCard.querySelector('.slot-name').textContent = name;
                 editingCard.querySelector('.slot-type').textContent = `${cat} - ${type}`;
-                
                 let notesEl = editingCard.querySelector('.slot-notes');
                 if (notes) {
                     if (!notesEl) {
@@ -1702,9 +2159,7 @@
                         editingCard.insertBefore(notesEl, editingCard.querySelector('.slot-stickers'));
                     }
                     notesEl.textContent = notes;
-                } else if (notesEl) {
-                    notesEl.remove();
-                }
+                } else if (notesEl) notesEl.remove();
                 
                 let stickersContainer = editingCard.querySelector('.slot-stickers');
                 if (!stickersContainer) {
@@ -1713,57 +2168,90 @@
                     editingCard.appendChild(stickersContainer);
                 }
                 stickersContainer.innerHTML = stickersHtml;
-                
+                showToast('✅ Modifié');
             } else {
                 const card = document.createElement('div');
-                card.className = 'client-slot';
-                
+                card.className = 'client-slot new';
+                card.draggable = true;
                 let html = `
-                    <div class="slot-header">
-                        <span class="slot-name">${name}</span>
-                        <span class="slot-edit no-print">✏️</span>
-                    </div>
+                    <div class="slot-header"><span class="slot-name">${name}</span><span class="slot-edit no-print">✏️</span></div>
                     <div class="slot-type">${cat} - ${type}</div>
                 `;
-                
-                if (notes) {
-                    html += `<div class="slot-notes">${notes}</div>`;
-                }
-                
-                html += datesHtml;
-                html += `<div class="slot-stickers">${stickersHtml}</div>`;
-                
+                if (notes) html += `<div class="slot-notes">${notes}</div>`;
+                html += datesHtml + `<div class="slot-stickers">${stickersHtml}</div>`;
                 card.innerHTML = html;
-                
                 makeDraggable(card);
-                
-                card.querySelector('.slot-edit').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    editerFiche(card);
-                });
+                card.querySelector('.slot-edit').addEventListener('click', (e) => { e.stopPropagation(); editerFiche(card); });
                 
                 const cell = document.querySelector(`td[data-week="${currentWeek}"][data-status="${currentStatus}"]`);
-                const btn = cell.querySelector('.add-slot-btn') || cell.querySelector('.no-add');
-                cell.insertBefore(card, btn);
+                cell.insertBefore(card, cell.querySelector('.add-slot-btn'));
+                clients.push({nom: name, element: card});
+                showToast('✅ Créé');
             }
             
             calculerSynthese();
-            calculerStatsDuree(); // Recalculer les stats après création/modification
+            calculerStatsDuree();
             fermerModal();
-        });
-
-        function ouvrirAide() {
-            document.getElementById('modal-aide').style.display = 'flex';
         }
 
-        function fermerAide() {
-            document.getElementById('modal-aide').style.display = 'none';
+        function creerDatesHtml(status) {
+            const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            let html = '<div class="slot-dates"', d = '', de = '', en = '', s = '';
+            if (status === 'demandes') { d = today; html += ` data-demande="${today}"`; }
+            else if (status === 'devis') { d = de = today; html += ` data-demande="${today}" data-devis="${today}"`; }
+            else if (status === 'envoyes') { d = en = today; html += ` data-demande="${today}" data-envoye="${today}"`; }
+            else if (status === 'signes') { d = s = today; html += ` data-demande="${today}" data-signe="${today}"`; }
+            html += '>';
+            if (d) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${d}</div>`;
+            if (de) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${de}</div>`;
+            if (en) html += `<div class="slot-date-item"><span class="slot-date-label">🟣 Envoyé:</span> ${en}</div>`;
+            if (s) html += `<div class="slot-date-item"><span class="slot-date-label">🟢 Signé:</span> ${s}</div>`;
+            return html + '</div>';
         }
 
-        window.onclick = function(e) {
-            if (e.target == document.getElementById('modal')) fermerModal();
-            if (e.target == document.getElementById('modal-aide')) fermerAide();
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
         }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function imprimer() {
+            window.print();
+        }
+
+        function showHelp() {
+            alert(`🎙️ COMMANDES VOCALES:
+
+1. "Nouveau client [Nom] [Type] [Cat]"
+   Ex: "Nouveau client Dupont Auto Particulier"
+
+2. "Note à [Nom] : [texte]"
+   Ex: "Note à Dupont : relancer demain"
+
+3. "Déplacer [Nom] vers [statut]"
+   Ex: "Déplacer Dupont vers signés"
+
+💡 INTERACTIONS:
+• Glisser-déposer souris/touch
+• Double-clic pour modifier
+• Glisser vers bas = supprimer
+
+📱 INSTALLATION:
+iOS: Partager → "Sur l'écran d'accueil"
+Android: Menu ⋮ → "Ajouter à l'écran d'accueil"`);
+        }
+
+        // Gestion micro hint
+        const micBtn = document.getElementById('micBtn');
+        micBtn.addEventListener('mouseenter', () => document.getElementById('micHint').classList.add('visible'));
+        micBtn.addEventListener('mouseleave', () => document.getElementById('micHint').classList.remove('visible'));
+        micBtn.addEventListener('touchstart', () => document.getElementById('micHint').classList.add('visible'));
+        micBtn.addEventListener('touchend', () => setTimeout(() => document.getElementById('micHint').classList.remove('visible'), 2000));
     </script>
 </body>
 </html>
