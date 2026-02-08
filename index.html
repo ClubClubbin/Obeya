@@ -94,7 +94,7 @@
             display: flex;
             gap: 20px;
             max-width: 1600px;
-            margin: 0 auto;
+            margin: 0 ;
         }
         
         .main-content {
@@ -176,7 +176,7 @@
             background: #f0f0f0;
         }
         
-        .synthese-item input.auto-calc {
+        .synthese-item input.-calc {
             background: #d5f4e6;
             border-color: #27ae60;
             color: #27ae60;
@@ -457,7 +457,7 @@
             top: 20px;
             height: fit-content;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow-y: ;
         }
         
         .historique-title {
@@ -859,7 +859,7 @@
             width: 100%;
             max-width: 450px;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow-y: ;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         
@@ -1037,7 +1037,7 @@
                 order: -1;
                 margin-bottom: 20px;
             }
-            .main-content { padding: 15px; overflow-x: auto; }
+            .main-content { padding: 15px; overflow-x: ; }
             .main-table { min-width: 800px; }
             .col-status { width: 120px; }
         }
@@ -1116,7 +1116,7 @@
             
             <div class="voice-help-box no-print">
                 <div class="voice-help-title">🎙️ Commandes vocales disponibles :</div>
-                <div class="voice-help-item">"Nouveau client Dupont Auto Particulier"</div>
+                <div class="voice-help-item">"Nouveau client Dupont  Particulier"</div>
                 <div class="voice-help-item">"Ajouter note à Dupont : relancer demain matin"</div>
                 <div class="voice-help-item">"Déplacer Dupont vers signés"</div>
             </div>
@@ -1350,6 +1350,7 @@
                 <div class="form-group">
                     <label>Type</label>
                     <select id="client-type">
+                        <option value="Auto">👥 Multi</option>                        
                         <option value="Auto">🚗 Auto</option>
                         <option value="Santé">🏥 Santé</option>
                         <option value="GAV">🛡️ GAV</option>
@@ -1617,25 +1618,58 @@
             const lowerText = text.toLowerCase().trim();
             console.log('Commande:', lowerText);
 
-            // Nouveau client
-            const nouveauMatch = lowerText.match(/(?:nouveau|créer|ajouter|nouvelle)\s+(?:client|cliente)?\s*(\w+)(?:\s+(auto|santé|gav|mrh|dab|collective|sante))?(?:\s+(particulier|pro|professionnel|entreprise))?/i);
-            if (nouveauMatch) {
-                const nom = capitalize(nouveauMatch[1]);
-                let type = 'Auto';
-                if (nouveauMatch[2]) {
-                    const t = nouveauMatch[2].toLowerCase();
-                    if (t.includes('sant')) type = 'Santé';
-                    else if (t.includes('gav')) type = 'GAV';
-                    else if (t.includes('mrh')) type = 'MRH';
-                    else if (t.includes('dab')) type = 'DAB';
-                    else if (t.includes('collect')) type = 'Collective';
+            // 1. Vérifier l'intention (si la phrase contient un verbe d'action)
+                const intentions = ['ajoute', 'crée', 'nouveau', 'nouvelle', 'faire', 'créer', 'ajouter'];
+                const hasIntention = intentions.some(verb => lowerText.includes(verb));
+            
+                if (hasIntention) {
+                    // --- EXTRACTION DU TYPE DE CONTRAT ---
+                    const typesMap = {
+                        'auto': 'Auto',
+                        'santé': 'Santé',
+                        'sante': 'Santé',
+                        'multi': 'Multi',
+                        'gav': 'GAV',
+                        'mrh': 'MRH',
+                        'dab': 'DAB',
+                        'collective': 'Collective',
+                        'collectif': 'Collective'
+                    };
+                    let type = 'Auto'; // Valeur par défaut
+                    for (let key in typesMap) {
+                        if (lowerText.includes(key)) {
+                            type = typesMap[key];
+                            break;
+                        }
+                    }
+            
+                    // --- EXTRACTION DE LA CATÉGORIE ---
+                    let cat = lowerText.match(/(pro|professionnel|entreprise|société)/i) ? 'PRO' : 'PART';
+            
+                    // --- EXTRACTION DU NOM (La partie la plus délicate) ---
+                    // On cherche ce qui vient après "mr", "mme", "nom de", "famille", "fiche de" ou "client"
+                    let nom = "";
+                    const nomMatch = lowerText.match(/(?:nom de|mr|mme|monsieur|madame|client|fiche de)\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)/i);
+                    
+                    if (nomMatch) {
+                        nom = capitalize(nomMatch[1].trim());
+                    } else {
+                        // Si aucune structure n'est trouvée, on prend le premier mot inconnu après le verbe
+                        // (Solution de secours)
+                        const words = lowerText.split(' ');
+                        const indexVerbe = words.findIndex(w => intentions.includes(w));
+                        if (indexVerbe !== -1 && words[indexVerbe + 2]) {
+                            nom = capitalize(words[indexVerbe + 2]); 
+                        }
+                    }
+            
+                    if (nom) {
+                        console.log(`Action: Création client | Nom: ${nom} | Type: ${type} | Cat: ${cat}`);
+                        stopVoice();
+                        setTimeout(() => createClientFromVoice(nom, type, cat), 300);
+                        return;
+                    }
                 }
-                const cat = (nouveauMatch[3] && nouveauMatch[3].includes('pro')) ? 'PRO' : 'PART';
-                
-                stopVoice();
-                setTimeout(() => createClientFromVoice(nom, type, cat), 300);
-                return;
-            }
 
             // Ajouter note
             const noteMatch = lowerText.match(/(?:ajouter|ajoute|note|noter)\s+(?:une\s+)?(?:note\s+)?(?:à|a|sur)\s+(\w+)[\s:]+(.+)/i);
