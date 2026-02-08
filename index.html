@@ -94,7 +94,7 @@
             display: flex;
             gap: 20px;
             max-width: 1600px;
-            margin: 0 auto;
+            margin: 0 ;
         }
         
         .main-content {
@@ -176,7 +176,7 @@
             background: #f0f0f0;
         }
         
-        .synthese-item input.auto-calc {
+        .synthese-item input.-calc {
             background: #d5f4e6;
             border-color: #27ae60;
             color: #27ae60;
@@ -385,7 +385,7 @@
             color: #555;
         }
         
-        .slot-notes {
+        .slot-s {
             font-size: 9px;
             color: #555;
             font-style: italic;
@@ -457,7 +457,7 @@
             top: 20px;
             height: fit-content;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow-y: ;
         }
         
         .historique-title {
@@ -859,7 +859,7 @@
             width: 100%;
             max-width: 450px;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow-y: ;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         
@@ -1037,7 +1037,7 @@
                 order: -1;
                 margin-bottom: 20px;
             }
-            .main-content { padding: 15px; overflow-x: auto; }
+            .main-content { padding: 15px; overflow-x: ; }
             .main-table { min-width: 800px; }
             .col-status { width: 120px; }
         }
@@ -1352,6 +1352,7 @@
                 <div class="form-group">
                     <label>Type</label>
                     <select id="client-type">
+                        <option value="Auto">👥 Multi</option>                        
                         <option value="Auto">🚗 Auto</option>
                         <option value="Santé">🏥 Santé</option>
                         <option value="GAV">🛡️ GAV</option>
@@ -1762,6 +1763,10 @@
                 addNoteToClient(nom, note);
                 return;
             }
+        }
+    
+        if (creationMatch) {
+            let nom, type = 'Auto', cat = 'PART';
 
             // Pattern D: "ajoute/note à/pour/sur <Nom> : <texte>" (compact)
             m = lowerText.match(/(?:r?ajoute[rzs]?|note[rzs]?)\s+(?:une\s+)?(?:note\s+)?(?:[àa]|pour|sur)\s+(?:(?:monsieur|madame|mme|mr?)\s+)?(\w+)[\s:,]+(.+)$/i);
@@ -1789,7 +1794,7 @@
                 else if (status.includes('park')) status = 'parking';
 
                 stopVoice();
-                moveClientByName(nom, status);
+                setTimeout(() => createClientFromVoice(nom, type, cat), 300);
                 return;
             }
 
@@ -1888,14 +1893,9 @@
                 }
             });
             
-            if (found) {
-                calculerSynthese();
-                calculerStatsDuree();
-                showToast(`✅ ${nom} déplacé`);
-            } else {
-                showToast(`❌ Client ${nom} non trouvé`);
-            }
+            if (!found) showToast(`❌ Client ${nom} non trouvé`);
         }
+    }
 
         // Drag & Drop + Touch
         function initDragAndDrop() {
