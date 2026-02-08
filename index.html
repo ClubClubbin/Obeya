@@ -1479,6 +1479,18 @@
 
         const stickerColors = { red: '#e74c3c', orange: '#f39c12', yellow: '#f1c40f', blue: '#3498db', black: '#2c3e50' };
 
+        // Firebase - Synchronisation temps réel
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8PdInd3QLtE3Ft-A3A6SB42QVpYO_-eQ",
+            authDomain: "obeya-suivi.firebaseapp.com",
+            projectId: "obeya-suivi",
+            storageBucket: "obeya-suivi.firebasestorage.app",
+            messagingSenderId: "781403536135",
+            appId: "1:781403536135:web:d186cfa46ea3f163b9a3a2"
+        };
+        let firebaseDb = null, firebaseModules = null;
+        let isLoadingFromFirebase = false, saveTimeout = null, lastSavedVersion = null;
+
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
             initDates();
@@ -1492,8 +1504,15 @@
             afficherHistorique();
             calculerStatsDuree();
             scannerClientsExistants();
+            // Charger les fiches sauvegardées localement (en attendant Firebase)
+            chargerFichesLocales();
             // Vérifier si la semaine active est dépassée (auto-clôture)
             verifierClotureSemaine();
+            // Sauvegarder vers Firebase quand on modifie les euros
+            document.getElementById('synth-euros').addEventListener('change', () => sauvegarderVersFirebase());
+            document.getElementById('synth-euros').addEventListener('input', () => sauvegarderVersFirebase());
+            // Initialiser Firebase (async, ne bloque pas le chargement)
+            initFirebase();
         });
 
         // PWA - Installation
@@ -2097,6 +2116,7 @@
             });
             
             showToast(found ? `📝 Note ajoutée à ${nom}` : `❌ Client ${nom} non trouvé`);
+            if (found) sauvegarderVersFirebase();
         }
 
         function moveClientByName(nom, newStatus) {
@@ -2506,6 +2526,8 @@
             document.getElementById('synth-demandes').value = currentWeekData.demandes;
             document.getElementById('synth-envoyes').value = currentWeekData.envoyes;
             document.getElementById('synth-signes').value = currentWeekData.signes;
+            // Synchroniser vers Firebase à chaque changement
+            sauvegarderVersFirebase();
         }
 
         function scannerClientsExistants() {
@@ -2706,6 +2728,275 @@
 📱 INSTALLATION:
 iOS: Partager → "Sur l'écran d'accueil"
 Android: Menu ⋮ → "Ajouter à l'écran d'accueil"`);
+        }
+
+        // ================================================
+        // === FIREBASE - Synchronisation temps réel ===
+        // ================================================
+
+        async function initFirebase() {
+            try {
+                const appModule = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
+                const fsModule = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+
+                const app = appModule.initializeApp(firebaseConfig);
+                firebaseDb = fsModule.getFirestore(app);
+                firebaseModules = fsModule;
+
+                ecouterFirebase();
+                updateSyncStatus('connected');
+                console.log('Firebase: connecté');
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                updateSyncStatus('offline');
+            }
+        }
+
+        // Sérialiser toutes les fiches du tableau en objets
+        function serializerTableau() {
+            const cards = [];
+            document.querySelectorAll('.client-slot').forEach(card => {
+                const cell = card.closest('td');
+                if (!cell) return;
+                const datesDiv = card.querySelector('.slot-dates');
+                const stickers = [];
+                card.querySelectorAll('.mini-sticker').forEach(s => {
+                    const style = s.getAttribute('style') || '';
+                    for (const [name, hex] of Object.entries(stickerColors)) {
+                        if (style.includes(hex)) stickers.push(name);
+                    }
+                });
+
+                cards.push({
+                    nom: card.querySelector('.slot-name')?.textContent || '',
+                    type: card.querySelector('.slot-type')?.textContent || '',
+                    notes: card.querySelector('.slot-notes')?.textContent || '',
+                    stickers: stickers,
+                    dates: {
+                        demande: datesDiv?.dataset.demande || '',
+                        demandeIso: datesDiv?.dataset.demandeIso || '',
+                        devis: datesDiv?.dataset.devis || '',
+                        devisIso: datesDiv?.dataset.devisIso || '',
+                        envoye: datesDiv?.dataset.envoye || '',
+                        envoyeIso: datesDiv?.dataset.envoyeIso || '',
+                        signe: datesDiv?.dataset.signe || '',
+                        signeIso: datesDiv?.dataset.signeIso || ''
+                    },
+                    week: cell.dataset.week || 'N',
+                    status: cell.dataset.status || 'demandes'
+                });
+            });
+            return cards;
+        }
+
+        // Recréer toutes les fiches à partir des données Firebase
+        function deserialiserTableau(cardsData) {
+            document.querySelectorAll('.client-slot').forEach(c => c.remove());
+            clients = [];
+            if (!cardsData || !Array.isArray(cardsData)) return;
+
+            cardsData.forEach(data => {
+                const card = document.createElement('div');
+                card.className = 'client-slot';
+                card.draggable = true;
+
+                let html = `<div class="slot-header"><span class="slot-name">${data.nom}</span><span class="slot-edit no-print">✏️</span></div>`;
+                html += `<div class="slot-type">${data.type}</div>`;
+                if (data.notes) html += `<div class="slot-notes">${data.notes}</div>`;
+
+                const d = data.dates || {};
+                html += '<div class="slot-dates"';
+                if (d.demande) html += ` data-demande="${d.demande}"`;
+                if (d.demandeIso) html += ` data-demande-iso="${d.demandeIso}"`;
+                if (d.devis) html += ` data-devis="${d.devis}"`;
+                if (d.devisIso) html += ` data-devis-iso="${d.devisIso}"`;
+                if (d.envoye) html += ` data-envoye="${d.envoye}"`;
+                if (d.envoyeIso) html += ` data-envoye-iso="${d.envoyeIso}"`;
+                if (d.signe) html += ` data-signe="${d.signe}"`;
+                if (d.signeIso) html += ` data-signe-iso="${d.signeIso}"`;
+                html += '>';
+                if (d.demande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${d.demande}</div>`;
+                if (d.devis) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${d.devis}</div>`;
+                if (d.envoye) html += `<div class="slot-date-item"><span class="slot-date-label">🟣 Envoyé:</span> ${d.envoye}</div>`;
+                if (d.signe) html += `<div class="slot-date-item"><span class="slot-date-label">🟢 Signé:</span> ${d.signe}</div>`;
+                html += '</div>';
+
+                html += '<div class="slot-stickers">';
+                (data.stickers || []).forEach(c => {
+                    if (stickerColors[c]) html += `<div class="mini-sticker" style="background:${stickerColors[c]}"></div>`;
+                });
+                html += '</div>';
+
+                card.innerHTML = html;
+                makeDraggable(card);
+                card.querySelector('.slot-edit')?.addEventListener('click', (e) => { e.stopPropagation(); editerFiche(card); });
+
+                const cell = document.querySelector(`td[data-week="${data.week}"][data-status="${data.status}"]`);
+                if (cell) {
+                    const anchor = cell.querySelector('.add-slot-btn') || cell.querySelector('.no-add');
+                    cell.insertBefore(card, anchor);
+                }
+
+                clients.push({ nom: data.nom, element: card });
+            });
+        }
+
+        // Sauvegarde vers Firebase (debounce 500ms)
+        function sauvegarderVersFirebase() {
+            if (!firebaseDb || isLoadingFromFirebase) return;
+
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                lastSavedVersion = Math.random().toString(36).substring(2, 10);
+                const data = {
+                    cards: serializerTableau(),
+                    historique: historiqueSemaines,
+                    weekData: {
+                        numero: currentWeekData.numero,
+                        debut: currentWeekData.debut,
+                        fin: currentWeekData.fin,
+                        demandes: currentWeekData.demandes,
+                        envoyes: currentWeekData.envoyes,
+                        signes: currentWeekData.signes,
+                        euros: parseInt(document.getElementById('synth-euros').value) || 0
+                    },
+                    semaineFinIso: localStorage.getItem('obeya_semaine_fin_iso') || '',
+                    version: lastSavedVersion
+                };
+
+                // Aussi sauvegarder en localStorage (fallback offline)
+                localStorage.setItem('obeya_cards', JSON.stringify(data.cards));
+
+                firebaseModules.setDoc(
+                    firebaseModules.doc(firebaseDb, 'obeya', 'board'),
+                    data
+                ).then(() => {
+                    updateSyncStatus('synced');
+                    console.log('Firebase: sauvegardé');
+                }).catch(err => {
+                    console.error('Firebase save error:', err);
+                    updateSyncStatus('error');
+                });
+            }, 500);
+        }
+
+        // Écouter les changements en temps réel depuis Firebase
+        function ecouterFirebase() {
+            if (!firebaseDb) return;
+
+            const docRef = firebaseModules.doc(firebaseDb, 'obeya', 'board');
+
+            firebaseModules.onSnapshot(docRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    // Premier lancement : pousser les données locales vers Firebase
+                    console.log('Firebase: document vide, initialisation...');
+                    // Charger les fiches depuis localStorage si disponible
+                    const localCards = localStorage.getItem('obeya_cards');
+                    if (localCards) {
+                        try { deserialiserTableau(JSON.parse(localCards)); } catch(e) {}
+                    }
+                    sauvegarderVersFirebase();
+                    return;
+                }
+
+                const data = snapshot.data();
+
+                // Ignorer notre propre écho
+                if (data.version === lastSavedVersion) {
+                    return;
+                }
+
+                console.log('Firebase: données reçues d\'un autre appareil');
+                isLoadingFromFirebase = true;
+
+                // Restaurer historique
+                if (data.historique) {
+                    historiqueSemaines = data.historique;
+                    localStorage.setItem('obeya_historique_semaines', JSON.stringify(historiqueSemaines));
+                    afficherHistorique();
+                }
+
+                // Restaurer weekData
+                if (data.weekData) {
+                    currentWeekData = { ...currentWeekData, ...data.weekData };
+                    document.getElementById('num-semaine').value = currentWeekData.numero;
+                    document.getElementById('date-debut').value = currentWeekData.debut;
+                    document.getElementById('date-fin').value = currentWeekData.fin;
+                    document.getElementById('synth-demandes').value = currentWeekData.demandes;
+                    document.getElementById('synth-envoyes').value = currentWeekData.envoyes;
+                    document.getElementById('synth-signes').value = currentWeekData.signes;
+                    if (data.weekData.euros !== undefined) {
+                        document.getElementById('synth-euros').value = data.weekData.euros;
+                    }
+                }
+
+                if (data.semaineFinIso) {
+                    localStorage.setItem('obeya_semaine_fin_iso', data.semaineFinIso);
+                }
+
+                // Restaurer les fiches
+                if (data.cards) {
+                    deserialiserTableau(data.cards);
+                    localStorage.setItem('obeya_cards', JSON.stringify(data.cards));
+                }
+
+                calculerStatsDuree();
+                isLoadingFromFirebase = false;
+                updateSyncStatus('synced');
+                showToast('🔄 Tableau synchronisé');
+            }, (err) => {
+                console.error('Firebase listen error:', err);
+                updateSyncStatus('error');
+            });
+        }
+
+        // Indicateur visuel de synchronisation
+        function updateSyncStatus(status) {
+            let indicator = document.getElementById('syncIndicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'syncIndicator';
+                indicator.style.cssText = 'position:fixed;top:10px;right:10px;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;z-index:999;transition:all 0.3s;';
+                document.body.appendChild(indicator);
+            }
+            switch (status) {
+                case 'connected':
+                    indicator.textContent = '🔄 Connexion...';
+                    indicator.style.background = '#ffeaa7';
+                    indicator.style.color = '#2d3436';
+                    break;
+                case 'synced':
+                    indicator.textContent = '✅ Synchronisé';
+                    indicator.style.background = '#00b894';
+                    indicator.style.color = 'white';
+                    setTimeout(() => { indicator.style.opacity = '0.4'; }, 2000);
+                    break;
+                case 'error':
+                    indicator.textContent = '⚠️ Erreur sync';
+                    indicator.style.background = '#d63031';
+                    indicator.style.color = 'white';
+                    indicator.style.opacity = '1';
+                    break;
+                case 'offline':
+                    indicator.textContent = '📴 Hors-ligne';
+                    indicator.style.background = '#636e72';
+                    indicator.style.color = 'white';
+                    indicator.style.opacity = '0.6';
+                    break;
+            }
+            if (status !== 'synced') indicator.style.opacity = '1';
+        }
+
+        // Charger les fiches depuis localStorage au démarrage (fallback offline)
+        function chargerFichesLocales() {
+            const localCards = localStorage.getItem('obeya_cards');
+            if (localCards) {
+                try {
+                    deserialiserTableau(JSON.parse(localCards));
+                } catch(e) {
+                    console.error('Erreur chargement fiches locales:', e);
+                }
+            }
         }
 
         // Gestion micro hint
