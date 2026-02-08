@@ -1119,7 +1119,8 @@
                 <div class="voice-help-item">"Crée une fiche au nom de Dupont pour un contrat auto pro"</div>
                 <div class="voice-help-item">"Nouveau client Martin santé particulier"</div>
                 <div class="voice-help-item">"Rajoute une note à la fiche de Dupont pour lui dire de me rappeler"</div>
-                <div class="voice-help-item">"Déplace Dupont vers signés"</div>
+                <div class="voice-help-item">"Le devis de Dupont a été envoyé" / "Forestier est signé"</div>
+                <div class="voice-help-item">"Mets Dupont en devis en cours" / "Déplace Dupont vers signés"</div>
             </div>
 
             <div class="synthese-box">
@@ -1335,7 +1336,8 @@
             <div class="voice-command-item">🎙️ "Crée une fiche au nom de [Nom] pour un contrat [Type] [Pro/Part]"</div>
             <div class="voice-command-item">🎙️ "Nouveau client [Nom] [Type] [Pro/Part]"</div>
             <div class="voice-command-item">📝 "Rajoute une note à la fiche de [Nom] pour [texte]"</div>
-            <div class="voice-command-item">➡️ "Déplace [Nom] vers [statut]"</div>
+            <div class="voice-command-item">➡️ "Le devis de [Nom] a été envoyé/signé"</div>
+            <div class="voice-command-item">➡️ "Mets [Nom] en devis en cours / envoyés / signés"</div>
         </div>
     </div>
 
@@ -1711,6 +1713,17 @@
                 // "vers" mal reconnu
                 [/\bverre?s?\b/g, 'vers'],
                 [/\bvert?s?\b/g, 'vers'],
+                // "devis" mal reconnu
+                [/\bde vie?\b/g, 'devis'],
+                [/\bdevi\b/g, 'devis'],
+                // "a été" mal reconnu
+                [/\ba étai[ts]?\b/g, 'a été'],
+                [/\baété\b/g, 'a été'],
+                // "en cours" mal reconnu
+                [/\bancour[s]?\b/g, 'en cours'],
+                [/\ben cour\b/g, 'en cours'],
+                // "traité" mal reconnu
+                [/\btrait[eé]e?\b/g, 'traité'],
             ];
 
             for (const [pattern, replacement] of corrections) {
@@ -1826,20 +1839,51 @@
             // === DEPLACEMENT ===
             // ============================
 
+            // Helper résolution statut
+            function resolveStatus(str) {
+                const s = str.toLowerCase();
+                if (s.includes('demand')) return 'demandes';
+                if (s.includes('cours') || s.includes('trait')) return 'devis';
+                if (s.includes('envoy')) return 'envoyes';
+                if (s.includes('sign')) return 'signes';
+                if (s.includes('park')) return 'parking';
+                return null;
+            }
+
             // Pattern A: "déplace/mets/passe <Nom> en/vers/dans <statut>"
-            m = lowerText.match(/(?:déplace[rzs]?|deplace[rzs]?|met[st]?r?e?|passe[rzs]?|bouge[rzs]?|move)\s+(?:(?:la\s+fiche|le\s+dossier|le\s+client)\s+(?:de\s+)?)?(?:(?:monsieur|madame|mme|mr?)\s+)?(\w+)\s+(?:vers|dans|en|au|aux?)\s*(demandes?|demander?|en\s*cours|envoy[eéè][rsez]*|sign[eéè][rsez]*|parking)/i);
+            m = lowerText.match(/(?:déplace[rzs]?|deplace[rzs]?|met[st]?r?e?|passe[rzs]?|bouge[rzs]?|move)\s+(?:(?:la\s+fiche|le\s+dossier|le\s+client|le\s+devis)\s+(?:de\s+)?)?(?:(?:monsieur|madame|mme|mr?)\s+)?(\w+)\s+(?:vers|dans|en|au|aux?)\s*(demandes?|demander?|(?:devis\s+)?en\s*cours|envoy[eéè]\w*|sign[eéè]\w*|parking|trait[eéè]\w*)/i);
             if (m) {
                 const nom = capitalize(m[1]);
-                let status = m[2].toLowerCase();
-                if (status.includes('demand')) status = 'demandes';
-                else if (status.includes('cours')) status = 'devis';
-                else if (status.includes('envoy')) status = 'envoyes';
-                else if (status.includes('sign')) status = 'signes';
-                else if (status.includes('park')) status = 'parking';
+                const status = resolveStatus(m[2]);
+                if (status) {
+                    stopVoice();
+                    moveClientByName(nom, status);
+                    return;
+                }
+            }
 
-                stopVoice();
-                moveClientByName(nom, status);
-                return;
+            // Pattern B: "le devis/la fiche de [Mr] <Nom> a été/est envoyé/signé/en cours"
+            m = lowerText.match(/(?:le\s+devis|la\s+fiche|le\s+dossier|le\s+client)\s+(?:de\s+|du\s+)(?:(?:monsieur|madame|mme|mr?)\s+)?(\w+)\s+(?:a\s+été|est)\s+(envoy[eéè]\w*|sign[eéè]\w*|(?:devis\s+)?en\s*cours|demand[eéè]\w*|trait[eéè]\w*|parking)/i);
+            if (m) {
+                const nom = capitalize(m[1]);
+                const status = resolveStatus(m[2]);
+                if (status) {
+                    stopVoice();
+                    moveClientByName(nom, status);
+                    return;
+                }
+            }
+
+            // Pattern C: "<Nom> a été/est envoyé/signé/en cours" (ultra-compact)
+            m = lowerText.match(/^(?:(?:monsieur|madame|mme|mr?)\s+)?(\w+)\s+(?:a\s+été|est)\s+(envoy[eéè]\w*|sign[eéè]\w*|(?:devis\s+)?en\s*cours|demand[eéè]\w*|trait[eéè]\w*)/i);
+            if (m) {
+                const nom = capitalize(m[1]);
+                const status = resolveStatus(m[2]);
+                if (status) {
+                    stopVoice();
+                    moveClientByName(nom, status);
+                    return;
+                }
             }
 
             showToast('❓ Commande non reconnue. Essayez : "Crée une fiche au nom de Dupont pour un contrat auto"');
