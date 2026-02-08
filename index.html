@@ -1727,6 +1727,11 @@
     
         if (creationMatch) {
             let nom, type = 'Auto', cat = 'PART';
+
+            let nom = creationMatch[1];
+            // Nettoyer et normaliser
+            nom = nom.replace(/^(monsieur|madame|mr|mme|client)\s+/i, "");
+            nom = nom.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
             
             // Extraction selon le pattern
             if (creationPatternIndex === 0) {
@@ -1867,18 +1872,33 @@
         }
 
         function addNoteToClient(nom, note) {
-            const allCards = document.querySelectorAll('.client-slot');
-            let found = false;
-            
-            allCards.forEach(card => {
-                const nameEl = card.querySelector('.slot-name');
-                if (nameEl && nameEl.textContent.toLowerCase() === nom.toLowerCase()) {
+        // Normaliser le nom recherché (première lettre de chaque mot en majuscule)
+        const nomRecherche = nom.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        
+        const allCards = document.querySelectorAll('.client-slot');
+        let found = false;
+        
+        allCards.forEach(card => {
+            const nameEl = card.querySelector('.slot-name');
+            if (nameEl) {
+                // Normaliser aussi le nom dans la fiche pour comparaison
+                const nomDansFiche = nameEl.textContent.trim();
+                const nomDansFicheNormalise = nomDansFiche.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                
+                // Comparaison insensible à la casse ET aux espaces
+                if (nomDansFicheNormalise === nomRecherche || 
+                    nomDansFiche.toLowerCase() === nom.toLowerCase()) {
+                    
                     let notesEl = card.querySelector('.slot-notes');
                     if (!notesEl) {
                         notesEl = document.createElement('div');
                         notesEl.className = 'slot-notes';
                         const datesDiv = card.querySelector('.slot-dates');
-                        card.insertBefore(notesEl, datesDiv ? datesDiv.nextSibling : null);
+                        if (datesDiv) {
+                            card.insertBefore(notesEl, datesDiv.nextSibling);
+                        } else {
+                            card.appendChild(notesEl);
+                        }
                     }
                     
                     const timestamp = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
@@ -1886,39 +1906,114 @@
                     notesEl.textContent = existing ? `${existing} | ${timestamp}: ${note}` : `${timestamp}: ${note}`;
                     
                     found = true;
+                    
+                    // Animation visuelle
                     card.style.background = '#fff3cd';
                     setTimeout(() => card.style.background = '', 1000);
+                    
+                    console.log(`✅ Note ajoutée à "${nomDansFiche}" (recherché: "${nomRecherche}")`);
                 }
-            });
+            }
+        });
+        
+        if (!found) {
+            console.log(`❌ Client "${nomRecherche}" non trouvé. Recherche approximative...`);
             
-            showToast(found ? `📝 Note ajoutée à ${nom}` : `❌ Client ${nom} non trouvé`);
-        }
-
-        function moveClientByName(nom, newStatus) {
-            const allCards = document.querySelectorAll('.client-slot');
-            let found = false;
-            
+            // Tentative avec recherche partielle
             allCards.forEach(card => {
                 const nameEl = card.querySelector('.slot-name');
-                if (nameEl && nameEl.textContent.toLowerCase() === nom.toLowerCase()) {
+                if (nameEl) {
+                    const nomDansFiche = nameEl.textContent.trim().toLowerCase();
+                    const nomCherche = nom.toLowerCase();
+                    
+                    // Si le nom cherché est CONTENU dans le nom de la fiche (ex: "Forest" dans "Forestier")
+                    if (nomDansFiche.includes(nomCherche) || nomCherche.includes(nomDansFiche)) {
+                        let notesEl = card.querySelector('.slot-notes');
+                        if (!notesEl) {
+                            notesEl = document.createElement('div');
+                            notesEl.className = 'slot-notes';
+                            const datesDiv = card.querySelector('.slot-dates');
+                            if (datesDiv) card.insertBefore(notesEl, datesDiv.nextSibling);
+                            else card.appendChild(notesEl);
+                        }
+                        
+                        const timestamp = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                        const existing = notesEl.textContent;
+                        notesEl.textContent = existing ? `${existing} | ${timestamp}: ${note}` : `${timestamp}: ${note}`;
+                        
+                        found = true;
+                        card.style.background = '#fff3cd';
+                        setTimeout(() => card.style.background = '', 1000);
+                        
+                        console.log(`✅ Note ajoutée (correspondance partielle): "${nameEl.textContent}"`);
+                        showToast(`📝 Note ajoutée à ${nameEl.textContent}`);
+                        return; // Sortir du forEach
+                    }
+                }
+            });
+        }
+        
+        if (!found) {
+            showToast(`❌ Client "${nom}" non trouvé`);
+        } else if (found && !note.includes('correspondance partielle')) {
+            showToast(`📝 Note ajoutée à ${nomRecherche}`);
+        }
+    }
+    
+            function moveClientByName(nom, newStatus) {
+        const nomRecherche = nom.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        const allCards = document.querySelectorAll('.client-slot');
+        let found = false;
+        
+        allCards.forEach(card => {
+            const nameEl = card.querySelector('.slot-name');
+            if (nameEl) {
+                const nomDansFiche = nameEl.textContent.trim();
+                const nomDansFicheNormalise = nomDansFiche.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                
+                if (nomDansFicheNormalise === nomRecherche || 
+                    nomDansFiche.toLowerCase() === nom.toLowerCase()) {
+                    
                     const targetCell = document.querySelector(`td[data-week="N"][data-status="${newStatus}"]`);
                     if (targetCell) {
                         const btn = targetCell.querySelector('.add-slot-btn') || targetCell.querySelector('.no-add');
                         targetCell.insertBefore(card, btn);
                         mettreAJourDate(card, newStatus);
                         found = true;
+                        console.log(`✅ Déplacé: "${nomDansFiche}" -> ${newStatus}`);
+                    }
+                }
+            }
+        });
+        
+        if (found) {
+            calculerSynthese();
+            calculerStatsDuree();
+            showToast(`✅ ${nomRecherche} déplacé vers ${getStatusLabel(newStatus)}`);
+        } else {
+            // Recherche approximative
+            allCards.forEach(card => {
+                const nameEl = card.querySelector('.slot-name');
+                if (nameEl) {
+                    const nomDansFiche = nameEl.textContent.trim().toLowerCase();
+                    const nomCherche = nom.toLowerCase();
+                    
+                    if (nomDansFiche.includes(nomCherche) || nomCherche.includes(nomDansFiche)) {
+                        const targetCell = document.querySelector(`td[data-week="N"][data-status="${newStatus}"]`);
+                        if (targetCell) {
+                            const btn = targetCell.querySelector('.add-slot-btn') || targetCell.querySelector('.no-add');
+                            targetCell.insertBefore(card, btn);
+                            mettreAJourDate(card, newStatus);
+                            found = true;
+                            showToast(`✅ ${nameEl.textContent} déplacé (correspondance partielle)`);
+                        }
                     }
                 }
             });
             
-            if (found) {
-                calculerSynthese();
-                calculerStatsDuree();
-                showToast(`✅ ${nom} déplacé`);
-            } else {
-                showToast(`❌ Client ${nom} non trouvé`);
-            }
+            if (!found) showToast(`❌ Client ${nom} non trouvé`);
         }
+    }
 
         // Drag & Drop + Touch
         function initDragAndDrop() {
