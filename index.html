@@ -1879,7 +1879,7 @@
             const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
             const iso = new Date().toISOString().slice(0, 10);
             let datesDiv = card.querySelector('.slot-dates');
-
+            
             if (!datesDiv) {
                 datesDiv = document.createElement('div');
                 datesDiv.className = 'slot-dates';
