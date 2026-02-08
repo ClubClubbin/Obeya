@@ -1616,72 +1616,83 @@
         // Traitement commandes vocales
         function processVoiceCommand(text) {
         const lowerText = text.toLowerCase().trim();
-        console.log('Traitement commande:', lowerText);
+        console.log('🎙️ Commande reçue:', lowerText);
     
         // =================================================================
-        // 1. GESTION DU DÉPLACEMENT (Prioritaire car verbe spécifique)
+        // 1. GESTION DU DÉPLACEMENT (Prioritaire)
         // =================================================================
-        const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move|passer)\s+(\w+)\s+(?:vers|dans|en|au)?\s*(demandes?|en cours|devis|envoyés?|signés?|parking)/i);
+        const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move|passer|mettre|envoyer)\s+(?:le\s+)?(?:client\s+)?(\w+)(?:\s+(?:vers|dans|en|au|à|a))?\s*(demandes?|en\s*cours|devis|envoy[ée]s?|sign[ée]s?|parking)/i);
         
         if (deplaceMatch) {
             const nom = capitalize(deplaceMatch[1]);
-            let status = deplaceMatch[2].toLowerCase();
+            let status = deplaceMatch[2].toLowerCase().replace(/\s+/g, ''); // enlève espaces
             
-            // Normalisation des status
+            // Normalisation
             if (status.includes('demand')) status = 'demandes';
-            else if (status.includes('cours') || status.includes('devis')) status = 'devis';
+            else if (status.includes('cours') || status === 'devis') status = 'devis';
             else if (status.includes('envoy')) status = 'envoyes';
             else if (status.includes('sign')) status = 'signes';
             else if (status.includes('park')) status = 'parking';
             
-            console.log(`Action: Déplacement | Client: ${nom} -> ${status}`);
+            console.log(`✅ Déplacement: ${nom} -> ${status}`);
             stopVoice();
             moveClientByName(nom, status);
             return;
         }
     
         // =================================================================
-        // 2. GESTION DES NOTES (Prioritaire sur création)
+        // 2. GESTION DES NOTES
         // =================================================================
-        const motsClesNote = ['note', 'noter', 'commentaire', 'remarque', 'précision', 'rajoute une note', 'écris'];
-        const isNoteCommand = motsClesNote.some(mot => lowerText.includes(mot));
+        // Détection plus robuste des notes
+        const notePatterns = [
+            /(?:note|noter|ajoute|rajoute|mets?)\s+(?:une\s+)?(?:note\s+)?(?:pour|sur|à|a|chez|dans)?\s*(?:le\s+)?(?:dossier\s+)?(?:de\s+)?(?:monsieur|madame|mr|mme|client)?\s*(\w+)[\s:]+(.+)/i,
+            /(\w+)\s*:\s*(.+)/i // Format "Nom : contenu"
+        ];
+        
+        let noteMatch = null;
+        let patternUsed = 0;
+        
+        for (let i = 0; i < notePatterns.length; i++) {
+            noteMatch = lowerText.match(notePatterns[i]);
+            if (noteMatch) {
+                patternUsed = i;
+                break;
+            }
+        }
     
-        // On s'assure qu'on ne parle pas de "nouveau client"
-        if (isNoteCommand && !lowerText.includes('nouveau client') && !lowerText.includes('créer un client')) {
+        // Vérifier qu'on ne crée pas un client
+        const isCreation = /(?:nouveau|créer|crée|nouvelle)\s+(?:client|fiche)/i.test(lowerText);
+        
+        if (noteMatch && !isCreation) {
+            let clientNom, contenuNote;
             
-            let clientNom = "";
-            // Recherche du nom (après "pour", "sur", "dossier de", etc.)
-            const nomMatch = lowerText.match(/(?:pour|sur|à|a|chez|dossier de|fiche de|monsieur|madame|mr|mme|client)\s+([a-zà-ÿ\-]+)/i);
-    
-            if (nomMatch) {
-                clientNom = capitalize(nomMatch[1]);
+            if (patternUsed === 0) {
+                // Pattern "Note pour Dupont : contenu"
+                clientNom = capitalize(noteMatch[1]);
+                contenuNote = noteMatch[2].trim();
             } else {
-                // Fallback : mot après "à" ou "pour"
-                const simpleMatch = lowerText.match(/(?:à|a|pour)\s+([a-zà-ÿ\-]+)/i);
-                if (simpleMatch) clientNom = capitalize(simpleMatch[1]);
+                // Pattern "Dupont : contenu" - vérifier que ce n'est pas une création
+                const possibleNom = capitalize(noteMatch[1]);
+                const possibleContenu = noteMatch[2].trim();
+                
+                // Vérifier que le "nom" ressemble à un nom et pas à une action
+                const motsInterdits = ['nouveau', 'créer', 'ajouter', 'note', 'déplacer', 'client'];
+                if (!motsInterdits.includes(possibleNom.toLowerCase())) {
+                    clientNom = possibleNom;
+                    contenuNote = possibleContenu;
+                }
             }
     
-            if (clientNom) {
-                // Nettoyage de la phrase pour extraire le contenu
-                let contenuNote = lowerText;
-                contenuNote = contenuNote.replace(clientNom.toLowerCase(), ""); // Enlève le nom
+            if (clientNom && contenuNote) {
+                // Nettoyage du contenu
+                contenuNote = contenuNote
+                    .replace(/^(disant\s+que|que|qu'|c'est|il\s+faut)\s*/i, "")
+                    .replace(/\b(ajoute|rajoute|une|un|note|pour|sur)\b/gi, " ")
+                    .trim();
                 
-                const motsA_Supprimer = [
-                    'ajouter', 'ajoute', 'rajoute', 'mettre', 'met', 'écrire', 'ecris',
-                    'une', 'un', 'le', 'la', 'au', 'du', 'de', 'des',
-                    'note', 'noter', 'commentaire', 'remarque',
-                    'pour', 'sur', 'à', 'a', 'dans', 'dossier', 'fiche', 'client',
-                    'monsieur', 'madame', 'mr', 'mme'
-                ];
-                const removeRegex = new RegExp(`\\b(${motsA_Supprimer.join('|')})\\b`, 'gi');
-                contenuNote = contenuNote.replace(removeRegex, " ").trim();
-                
-                // Enlève les liaisons de début (ex: "disant que")
-                contenuNote = contenuNote.replace(/^(disant\s+que|que|qu'|:|c'est|il\s+faut|comme\s+quoi)\s*/i, "");
-    
                 if (contenuNote.length > 0) {
                     contenuNote = contenuNote.charAt(0).toUpperCase() + contenuNote.slice(1);
-                    console.log(`Action: Ajout Note | Client: ${clientNom} | Note: "${contenuNote}"`);
+                    console.log(`✅ Note: "${contenuNote}" pour ${clientNom}`);
                     stopVoice();
                     addNoteToClient(clientNom, contenuNote);
                     return;
@@ -1690,78 +1701,135 @@
         }
     
         // =================================================================
-        // 3. GESTION DE LA CRÉATION (Dernier ressort)
+        // 3. GESTION DE LA CRÉATION
         // =================================================================
-        const intentionsCreation = ['ajoute', 'crée', 'nouveau', 'nouvelle', 'faire', 'créer', 'ajouter', 'fiche'];
-        const hasCreationIntention = intentionsCreation.some(verb => lowerText.includes(verb));
+        const creationPatterns = [
+            // Pattern 1: "Nouveau client Dupont Auto"
+            /(?:nouveau|nouvelle|créer|crée|ajoute|ajouter)\s+(?:un\s+|une\s+)?(?:client|cliente|fiche|dossier)?\s+(?:monsieur|madame|mr|mme)?\s*([a-zà-ÿ\-]+)(?:\s+(auto|santé|mutuelle|gav|mrh|habitation|dab|collective|voiture|maison))?(?:\s+(particulier|pro|professionnel|entreprise))?/i,
+            
+            // Pattern 2: "Client Dupont Auto"
+            /(?:^|\s)([a-zà-ÿ\-]+)\s+(?:veut|souhaite|prend|prends?)\s+(?:un|une)?\s*(auto|santé|mutuelle|gav|mrh|habitation)/i,
+            
+            // Pattern 3: "Fiche Dupont"
+            /(?:fiche|dossier)\s+(?:de\s+)?(?:monsieur|madame|mr|mme)?\s*([a-zà-ÿ\-]+)/i
+        ];
+        
+        let creationMatch = null;
+        let creationPatternIndex = -1;
+        
+        for (let i = 0; i < creationPatterns.length; i++) {
+            creationMatch = lowerText.match(creationPatterns[i]);
+            if (creationMatch) {
+                creationPatternIndex = i;
+                break;
+            }
+        }
     
-        if (hasCreationIntention) {
-            // A. Extraction Type
-            const typesMap = {
-                'auto': 'Auto', 'voiture': 'Auto',
-                'santé': 'Santé', 'sante': 'Santé', 'mutuelle': 'Santé',
-                'multi': 'Multi', 'habitation': 'MRH', 'maison': 'MRH',
-                'gav': 'GAV', 'accident': 'GAV',
-                'mrh': 'MRH',
-                'dab': 'DAB',
-                'collective': 'Collective', 'collectif': 'Collective'
-            };
-            let type = 'Auto'; // Défaut
-            for (let key in typesMap) {
-                if (lowerText.includes(key)) {
-                    type = typesMap[key];
-                    break;
-                }
+        if (creationMatch) {
+            let nom, type = 'Auto', cat = 'PART';
+            
+            // Extraction selon le pattern
+            if (creationPatternIndex === 0) {
+                nom = creationMatch[1];
+                if (creationMatch[2]) type = normalizeType(creationMatch[2]);
+                if (creationMatch[3]) cat = creationMatch[3].toLowerCase().includes('pro') ? 'PRO' : 'PART';
+            } 
+            else if (creationPatternIndex === 1) {
+                nom = creationMatch[1];
+                if (creationMatch[2]) type = normalizeType(creationMatch[2]);
+            }
+            else if (creationPatternIndex === 2) {
+                nom = creationMatch[1];
             }
     
-            // B. Extraction Catégorie
-            let cat = lowerText.match(/(pro|professionnel|entreprise|société)/i) ? 'PRO' : 'PART';
-    
-            // C. Extraction Nom (Méthode blindée)
-            let nom = "";
-            let textCleaned = lowerText.replace(/(au nom de|le nom de|du nom de|nom de)/g, "").trim();
+            // Validation du nom
+            const motsInvalides = ['un', 'une', 'le', 'la', 'client', 'fiche', 'pour', 'note', 'déplacer', 'ajouter', 'créer', 'nouveau'];
             
-            const nomMatch = textCleaned.match(/(?:monsieur|madame|mr|mme|m\.|mle|client|fiche|dossier)\s+([a-zà-ÿ\-]+(?:\s+[a-zà-ÿ\-]+)?)/i);
-            
-            if (nomMatch) {
-                nom = nomMatch[1].trim();
-            } else {
-                // Cas de secours : "Nouveau client Forestier"
-                const motApresAction = lowerText.match(/(?:nouveau|créer|ajouter|client)\s+([a-zà-ÿ\-]+)/i);
-                if (motApresAction) {
-                    const candidat = motApresAction[1];
-                    const motsInterdits = ['un', 'une', 'le', 'la', 'pour', 'auto', 'contrat', 'fiche'];
-                    if (!motsInterdits.includes(candidat)) {
-                        nom = candidat;
-                    }
-                }
-            }
-    
-            if (nom) {
-                nom = nom.replace(/^(monsieur|madame|mr|mme)\s+/i, ""); // Nettoyage ultime
-                nom = capitalize(nom);
+            if (nom && !motsInvalides.includes(nom.toLowerCase())) {
+                nom = capitalize(nom.replace(/^(monsieur|madame|mr|mme)\s+/i, ""));
                 
-                console.log(`Action: Création | Nom: ${nom} | Type: ${type} | Cat: ${cat}`);
+                console.log(`✅ Création: ${nom} | Type: ${type} | Cat: ${cat}`);
                 stopVoice();
-                // Petit délai pour laisser l'interface respirer
                 setTimeout(() => createClientFromVoice(nom, type, cat), 300);
                 return;
             }
         }
     
         // =================================================================
-        // 4. AUCUNE CORRESPONDANCE
+        // 4. RECHERCHE SIMPLE
         // =================================================================
-        console.log("Commande non comprise");
-        showToast('❓ Commande non comprise. Essayez: "Nouveau client Dupont" ou "Déplacer Martin vers signés"');
-        setTimeout(stopVoice, 2500);
+        const searchMatch = lowerText.match(/(?:cherche|trouve|où\s+est)\s+(?:le\s+)?(?:client\s+)?(\w+)/i);
+        if (searchMatch) {
+            const nom = capitalize(searchMatch[1]);
+            console.log(`🔍 Recherche: ${nom}`);
+            // Implémenter la recherche visuelle ici
+            highlightClient(nom);
+            return;
+        }
+    
+        // =================================================================
+        // 5. AUCUNE CORRESPONDANCE
+        // =================================================================
+        console.log("❌ Non reconnu:", lowerText);
+        showToast('❓ Essayez: "Nouveau client Dupont Auto" ou "Déplacer Martin vers signés" ou "Note pour Dupont : relancer demain"');
+        setTimeout(stopVoice, 3000);
     }
     
-    // Fonction utilitaire indispensable
-    function capitalize(str) {
-        if (!str) return "";
-        return str.replace(/\b\w/g, l => l.toUpperCase());
-    }
+        // Fonctions utilitaires
+        function normalizeType(typeStr) {
+            const map = {
+                'auto': 'Auto', 'voiture': 'Auto', 'automobile': 'Auto',
+                'santé': 'Santé', 'sante': 'Santé', 'mutuelle': 'Santé',
+                'gav': 'GAV', 'accident': 'GAV',
+                'mrh': 'MRH', 'habitation': 'MRH', 'maison': 'MRH', 'multi': 'MRH',
+                'dab': 'DAB',
+                'collective': 'Collective', 'collectif': 'Collective', 'entreprise': 'Collective'
+            };
+            return map[typeStr.toLowerCase()] || 'Auto';
+        }
+        
+        function capitalize(str) {
+            if (!str) return "";
+            // Gère les noms composés (ex: "dupont-martin" -> "Dupont-Martin")
+            return str.toLowerCase().replace(/(^|\s|-)([a-zà-ÿ])/g, (match, separator, char) => separator + char.toUpperCase());
+        }
+        
+        function highlightClient(nom) {
+            const cards = document.querySelectorAll('.client-slot');
+            let found = false;
+            
+            cards.forEach(card => {
+                const nameEl = card.querySelector('.slot-name');
+                if (nameEl && nameEl.textContent.toLowerCase().includes(nom.toLowerCase())) {
+                    card.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    card.style.animation = 'pulse-highlight 2s';
+                    setTimeout(() => card.style.animation = '', 2000);
+                    found = true;
+                }
+            });
+            
+            if (found) {
+                showToast(`🔍 Client ${nom} trouvé`);
+            } else {
+                showToast(`❌ Client ${nom} non trouvé`);
+            }
+        }
+        
+        // Ajouter le CSS pour l'animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse-highlight {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); transform: scale(1); }
+                50% { box-shadow: 0 0 20px 10px rgba(102, 126, 234, 0.3); transform: scale(1.02); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Fonction utilitaire indispensable
+        function capitalize(str) {
+            if (!str) return "";
+            return str.replace(/\b\w/g, l => l.toUpperCase());
+        }
 
         function createClientFromVoice(nom, type, cat) {
             const card = document.createElement('div');
