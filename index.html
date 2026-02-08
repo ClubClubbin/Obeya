@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Obeya Voice">
+    <meta name="apple-mobile-web-app-title" content="Areas Obeya">
     <meta name="theme-color" content="#667eea">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Obeya Voice">
-    
-    <title>Obeya Voice - Tableau Agent Général</title>
-    
-    <!-- Favicon pour PWA -->
-    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23667eea' width='192' height='192' rx='20'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%23667eea' width='180' height='180' rx='20'/%3E%3Ctext x='90' y='115' font-size='75' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
-    
-    <!-- Manifest PWA inline -->
-    <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Obeya Voice","short_name":"Obeya","start_url":".","display":"standalone","background_color":"#f5f7fa","theme_color":"#667eea","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect fill=\'%23667eea\' width=\'192\' height=\'192\' rx=\'20\'/%3E%3Ctext x=\'96\' y=\'120\' font-size=\'80\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"},{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 512 512\'%3E%3Crect fill=\'%23667eea\' width=\'512\' height=\'512\' rx=\'40\'/%3E%3Ctext x=\'256\' y=\'320\' font-size=\'220\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+    <meta name="application-name" content="Areas Obeya">
+
+    <title>Areas Assurances - Tableau Obeya</title>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
     
     <style>
         @media print {
@@ -1094,7 +1091,7 @@
 <body>
     <!-- Prompt d'installation -->
     <div class="install-prompt" id="installPrompt">
-        📱 Installer Obeya Voice
+        📱 Installer Areas Obeya
         <button class="install-btn" onclick="installPWA()">Installer</button>
         <button onclick="dismissInstall()" style="background:none;border:none;color:white;font-size:18px;">✕</button>
     </div>
@@ -1108,7 +1105,8 @@
     <div class="page-wrapper">
         <div class="main-content">
             <div class="app-header">
-                <h1>📊 Tableau Obeya Voice</h1>
+                <img src="icons/logo-areas.svg" alt="Areas Assurances" style="height: 70px; margin-bottom: 8px;">
+                <h1>Tableau Obeya</h1>
                 <div class="subtitle">Suivi temporel des dossiers - Vue flux</div>
                 <div class="header-actions no-print">
                     <button class="header-btn" onclick="imprimer()" title="Imprimer">🖨️</button>
@@ -1432,12 +1430,9 @@
                 console.log('App déjà installée');
             }
 
-            // Service Worker simplifié pour offline
+            // Service Worker pour offline et installation PWA
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-                `)).catch(() => console.log('SW non enregistré'));
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
         }
 
@@ -1882,6 +1877,7 @@
 
         function mettreAJourDate(card, newStatus) {
             const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            const iso = new Date().toISOString().slice(0, 10);
             let datesDiv = card.querySelector('.slot-dates');
             
             if (!datesDiv) {
@@ -1889,16 +1885,16 @@
                 datesDiv.className = 'slot-dates';
                 card.insertBefore(datesDiv, card.querySelector('.slot-stickers'));
             }
-            
+
             let dateDemande = datesDiv.dataset.demande || '';
             let dateDevis = datesDiv.dataset.devis || '';
             let dateEnvoye = datesDiv.dataset.envoye || '';
             let dateSigne = datesDiv.dataset.signe || '';
-            
-            if (newStatus === 'demandes' && !dateDemande) { dateDemande = today; datesDiv.dataset.demande = today; }
-            else if (newStatus === 'devis' && !dateDevis) { dateDevis = today; datesDiv.dataset.devis = today; }
-            else if (newStatus === 'envoyes' && !dateEnvoye) { dateEnvoye = today; datesDiv.dataset.envoye = today; }
-            else if (newStatus === 'signes' && !dateSigne) { dateSigne = today; datesDiv.dataset.signe = today; }
+
+            if (newStatus === 'demandes' && !dateDemande) { dateDemande = today; datesDiv.dataset.demande = today; datesDiv.dataset.demandeIso = iso; }
+            else if (newStatus === 'devis' && !dateDevis) { dateDevis = today; datesDiv.dataset.devis = today; datesDiv.dataset.devisIso = iso; }
+            else if (newStatus === 'envoyes' && !dateEnvoye) { dateEnvoye = today; datesDiv.dataset.envoye = today; datesDiv.dataset.envoyeIso = iso; }
+            else if (newStatus === 'signes' && !dateSigne) { dateSigne = today; datesDiv.dataset.signe = today; datesDiv.dataset.signeIso = iso; }
             
             let html = '';
             if (dateDemande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${dateDemande}</div>`;
@@ -1998,13 +1994,14 @@
         function calculerStatsDuree() {
             const cardsSignees = document.querySelectorAll('[data-status="signes"] .client-slot');
             const durees = [];
-            
+
             cardsSignees.forEach(card => {
                 const datesDiv = card.querySelector('.slot-dates');
                 if (datesDiv) {
-                    const d1 = parseDateFr(datesDiv.dataset.demande);
-                    const d2 = parseDateFr(datesDiv.dataset.signe);
-                    if (d1 && d2) durees.push(Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)));
+                    // Prefer ISO dates for accurate calculation, fallback to dd/mm parsing
+                    const d1 = datesDiv.dataset.demandeIso ? new Date(datesDiv.dataset.demandeIso) : parseDateFr(datesDiv.dataset.demande);
+                    const d2 = datesDiv.dataset.signeIso ? new Date(datesDiv.dataset.signeIso) : parseDateFr(datesDiv.dataset.signe);
+                    if (d1 && d2) durees.push(Math.max(0, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24))));
                 }
             });
             
@@ -2196,11 +2193,12 @@
 
         function creerDatesHtml(status) {
             const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            const iso = new Date().toISOString().slice(0, 10);
             let html = '<div class="slot-dates"', d = '', de = '', en = '', s = '';
-            if (status === 'demandes') { d = today; html += ` data-demande="${today}"`; }
-            else if (status === 'devis') { d = de = today; html += ` data-demande="${today}" data-devis="${today}"`; }
-            else if (status === 'envoyes') { d = en = today; html += ` data-demande="${today}" data-envoye="${today}"`; }
-            else if (status === 'signes') { d = s = today; html += ` data-demande="${today}" data-signe="${today}"`; }
+            if (status === 'demandes') { d = today; html += ` data-demande="${today}" data-demande-iso="${iso}"`; }
+            else if (status === 'devis') { d = de = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-devis="${today}" data-devis-iso="${iso}"`; }
+            else if (status === 'envoyes') { d = en = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-envoye="${today}" data-envoye-iso="${iso}"`; }
+            else if (status === 'signes') { d = s = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-signe="${today}" data-signe-iso="${iso}"`; }
             html += '>';
             if (d) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${d}</div>`;
             if (de) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${de}</div>`;
