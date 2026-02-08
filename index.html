@@ -385,7 +385,7 @@
             color: #555;
         }
         
-        .slot-notes {
+        .slot-s {
             font-size: 9px;
             color: #555;
             font-style: italic;
@@ -1117,7 +1117,7 @@
             <div class="voice-help-box no-print">
                 <div class="voice-help-title">🎙️ Commandes vocales disponibles :</div>
                 <div class="voice-help-item">"Nouveau client Dupont  Particulier"</div>
-                <div class="voice-help-item">"Ajouter note à Dupont : relancer demain matin"</div>
+                <div class="voice-help-item">"Ajouter  à Dupont : relancer demain matin"</div>
                 <div class="voice-help-item">"Déplacer Dupont vers signés"</div>
             </div>
 
@@ -1332,7 +1332,7 @@
         <div class="voice-commands">
             <div class="voice-commands-title">Commandes disponibles</div>
             <div class="voice-command-item">🎙️ "Nouveau client [Nom] [Type]"</div>
-            <div class="voice-command-item">📝 "Note à [Nom] : [texte]"</div>
+            <div class="voice-command-item">📝 " à [Nom] : [texte]"</div>
             <div class="voice-command-item">➡️ "Déplacer [Nom] vers [statut]"</div>
         </div>
     </div>
@@ -1671,15 +1671,65 @@
                     }
                 }
 
-            // Ajouter note
-            const noteMatch = lowerText.match(/(?:ajouter|ajoute|note|noter)\s+(?:une\s+)?(?:note\s+)?(?:à|a|sur)\s+(\w+)[\s:]+(.+)/i);
-            if (noteMatch) {
-                const nom = capitalize(noteMatch[1]);
-                const note = noteMatch[2];
-                stopVoice();
-                addNoteToClient(nom, note);
-                return;
-            }
+                // --- 2. DÉTECTION : EST-CE UNE DEMANDE D'AJOUT DE NOTE ? ---
+                    const motsClesNote = ['note', 'noter', 'commentaire', 'remarque', 'précision', 'rajoute', 'écris'];
+                    // On vérifie si la phrase contient au moins un mot clé
+                    const isNoteCommand = motsClesNote.some(mot => lowerText.includes(mot));
+                
+                    // On évite de confondre avec "Nouveau client"
+                    if (isNoteCommand && !lowerText.includes('nouveau client') && !lowerText.includes('créer un client')) {
+                
+                        // --- 2. EXTRACTION DU NOM DU CLIENT ---
+                        // On cherche des motifs comme "pour [Nom]", "sur [Nom]", "dossier de [Nom]", "fiche de [Nom]"
+                        // ou simplement après "à [Nom]"
+                        let clientNom = "";
+                        const nomMatch = lowerText.match(/(?:pour|sur|à|a|chez|dossier de|fiche de|monsieur|madame|mr|mme|client)\s+([a-zà-ÿ]+)/i);
+                
+                        if (nomMatch) {
+                            clientNom = capitalize(nomMatch[1]);
+                        } else {
+                            // Fallback : Si on dit "Note à Dupont", on essaie de choper le mot après "à" ou "pour"
+                            const simpleMatch = lowerText.match(/(?:à|a|pour)\s+([a-zà-ÿ]+)/i);
+                            if (simpleMatch) clientNom = capitalize(simpleMatch[1]);
+                        }
+                
+                        if (clientNom) {
+                            // --- 3. EXTRACTION DU CONTENU DE LA NOTE (Nettoyage) ---
+                            // On prend toute la phrase et on retire les bouts qu'on a déjà utilisés (Commandes + Nom)
+                            let contenuNote = lowerText;
+                
+                            // a. On supprime le nom trouvé
+                            contenuNote = contenuNote.replace(clientNom.toLowerCase(), "");
+                
+                            // b. On supprime les mots de commande (note, ajouter, pour, sur, dossier...)
+                            const motsA_Supprimer = [
+                                'ajouter', 'ajoute', 'rajoute', 'mettre', 'met', 'écrire', 'ecris',
+                                'une', 'un', 'le', 'la', 'au', 'du', 'de', 'des',
+                                'note', 'noter', 'commentaire', 'remarque',
+                                'pour', 'sur', 'à', 'a', 'dans', 'dossier', 'fiche', 'client',
+                                'monsieur', 'madame', 'mr', 'mme'
+                            ];
+                            
+                            // On crée une Regex dynamique pour supprimer ces mots
+                            const removeRegex = new RegExp(`\\b(${motsA_Supprimer.join('|')})\\b`, 'gi');
+                            contenuNote = contenuNote.replace(removeRegex, " ").trim();
+                
+                            // c. Nettoyage final des "mots de liaison" de début de phrase (ex: "disant que", "que", ":")
+                            // Cela permet de transformer "Note pour Martin disant qu'il est malade" en "il est malade"
+                            contenuNote = contenuNote.replace(/^(disant\s+que|que|qu'|:|c'est|il\s+faut|comme\s+quoi)\s*/i, "");
+                            
+                            // Correction majuscule première lettre de la note
+                            if (contenuNote.length > 0) {
+                                contenuNote = contenuNote.charAt(0).toUpperCase() + contenuNote.slice(1);
+                
+                                console.log(`Action: Ajout Note | Client: ${clientNom} | Note: "${contenuNote}"`);
+                                
+                                stopVoice();
+                                addNoteToClient(clientNom, contenuNote);
+                                return;
+                            }
+                        }
+                    }
 
             // Déplacer
             const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move)\s+(\w+)\s+(?:vers|dans|en|au)?\s*(demandes?|en cours|envoyés?|signés?|parking)/i);
