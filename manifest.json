@@ -1,0 +1,25 @@
+{
+    "name": "Obeya - Suivi Devis",
+    "short_name": "Obeya",
+    "description": "Tableau Obeya interactif pour le suivi des devis",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#f5f7fa",
+    "theme_color": "#667eea",
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

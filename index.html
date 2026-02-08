@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Obeya Voice">
+    <meta name="apple-mobile-web-app-title" content="Obeya">
     <meta name="theme-color" content="#667eea">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Obeya Voice">
-    
-    <title>Obeya Voice - Tableau Agent Général</title>
-    
-    <!-- Favicon pour PWA -->
-    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23667eea' width='192' height='192' rx='20'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%23667eea' width='180' height='180' rx='20'/%3E%3Ctext x='90' y='115' font-size='75' text-anchor='middle' fill='white'%3E🎤%3C/text%3E%3C/svg%3E">
-    
-    <!-- Manifest PWA inline -->
-    <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"Obeya Voice","short_name":"Obeya","start_url":".","display":"standalone","background_color":"#f5f7fa","theme_color":"#667eea","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect fill=\'%23667eea\' width=\'192\' height=\'192\' rx=\'20\'/%3E%3Ctext x=\'96\' y=\'120\' font-size=\'80\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"},{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 512 512\'%3E%3Crect fill=\'%23667eea\' width=\'512\' height=\'512\' rx=\'40\'/%3E%3Ctext x=\'256\' y=\'320\' font-size=\'220\' text-anchor=\'middle\' fill=\'white\'%3E🎤%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+    <meta name="application-name" content="Obeya">
+
+    <title>Obeya - Tableau Agent Général</title>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
     
     <style>
         @media print {
@@ -1432,12 +1429,9 @@
                 console.log('App déjà installée');
             }
 
-            // Service Worker simplifié pour offline
+            // Service Worker pour offline et installation PWA
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-                `)).catch(() => console.log('SW non enregistré'));
+                navigator.serviceWorker.register('./sw.js').catch(function() {});
             }
         }
 
