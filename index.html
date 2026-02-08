@@ -1414,6 +1414,8 @@
             afficherHistorique();
             calculerStatsDuree();
             scannerClientsExistants();
+            // Vérifier si la semaine active est dépassée (auto-clôture)
+            verifierClotureSemaine();
         });
 
         // PWA - Installation
@@ -2165,8 +2167,34 @@
         }
 
         function cloturerSemaine() {
-            if (!confirm('Clôturer la semaine ?')) return;
-            
+            if (!confirm('Clôturer la semaine ? Les fiches vont glisser vers la colonne suivante.')) return;
+            effectuerCloture();
+            showToast('✅ Semaine clôturée — fiches décalées');
+        }
+
+        // Décale toutes les fiches : N→N+1, N+1→N+2, N+2→Parking
+        function decalerFiches() {
+            const statuts = ['demandes', 'devis', 'envoyes', 'signes'];
+            const colonnes = ['N', 'N+1', 'N+2', 'parking'];
+
+            for (const statut of statuts) {
+                // Parcourir en sens inverse : N+2→Parking, puis N+1→N+2, puis N→N+1
+                for (let i = colonnes.length - 2; i >= 0; i--) {
+                    const source = document.querySelector(`td[data-week="${colonnes[i]}"][data-status="${statut}"]`);
+                    const dest = document.querySelector(`td[data-week="${colonnes[i + 1]}"][data-status="${statut}"]`);
+                    if (!source || !dest) continue;
+
+                    const cards = source.querySelectorAll('.client-slot');
+                    if (cards.length === 0) continue;
+
+                    const anchor = dest.querySelector('.add-slot-btn') || dest.querySelector('.no-add');
+                    cards.forEach(card => dest.insertBefore(card, anchor));
+                }
+            }
+        }
+
+        // Effectue la clôture : archive stats, décale fiches, réinitialise
+        function effectuerCloture() {
             const semaineArchive = {
                 numero: currentWeekData.numero,
                 debut: currentWeekData.debut,
@@ -2177,22 +2205,94 @@
                 euros: parseInt(document.getElementById('synth-euros').value) || 0,
                 dateCloture: new Date().toLocaleDateString('fr-FR')
             };
-            
+
             historiqueSemaines.unshift(semaineArchive);
-            sauvegarderDonnees();
-            
-            currentWeekData.numero++;
+
+            // Décaler toutes les fiches d'une colonne vers la droite
+            decalerFiches();
+
+            // Réinitialiser les compteurs
             currentWeekData.demandes = currentWeekData.envoyes = currentWeekData.signes = 0;
-            
-            document.getElementById('num-semaine').value = currentWeekData.numero;
             document.getElementById('synth-demandes').value = 0;
             document.getElementById('synth-envoyes').value = 0;
             document.getElementById('synth-signes').value = 0;
             document.getElementById('synth-euros').value = 0;
-            
+
+            // Recalculer les dates pour la semaine courante
+            initDates();
+            sauvegarderDateSemaine();
+            sauvegarderDonnees();
             afficherHistorique();
+            calculerSynthese();
             calculerStatsDuree();
-            showToast('✅ Semaine clôturée');
+        }
+
+        // Sauvegarde la date de fin de semaine active (ISO) pour comparaison auto
+        function sauvegarderDateSemaine() {
+            const today = new Date();
+            const currentDay = today.getDay();
+            const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+            const lundi = new Date(new Date().setDate(diff));
+            const dimanche = new Date(lundi);
+            dimanche.setDate(lundi.getDate() + 6);
+            localStorage.setItem('obeya_semaine_fin_iso', dimanche.toISOString().split('T')[0]);
+            localStorage.setItem('obeya_semaine_numero', currentWeekData.numero.toString());
+        }
+
+        // Vérifie au chargement si la semaine active est dépassée
+        function verifierClotureSemaine() {
+            const savedEndDate = localStorage.getItem('obeya_semaine_fin_iso');
+            if (!savedEndDate) {
+                // Premier lancement : sauvegarder la date de fin de cette semaine
+                sauvegarderDateSemaine();
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const endDate = new Date(savedEndDate + 'T00:00:00');
+
+            if (today > endDate) {
+                // Calculer combien de semaines se sont écoulées
+                const diffMs = today - endDate;
+                const semainesPasses = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
+                // Plafonner à 3 décalages (au-delà, tout est en parking de toute façon)
+                const nbDecalages = Math.min(semainesPasses, 3);
+
+                for (let i = 0; i < nbDecalages; i++) {
+                    decalerFiches();
+                }
+
+                // Archiver la semaine précédente
+                const savedNumero = parseInt(localStorage.getItem('obeya_semaine_numero')) || currentWeekData.numero;
+                const semaineArchive = {
+                    numero: savedNumero,
+                    debut: currentWeekData.debut,
+                    fin: currentWeekData.fin,
+                    demandes: parseInt(document.getElementById('synth-demandes').value) || 0,
+                    envoyes: parseInt(document.getElementById('synth-envoyes').value) || 0,
+                    signes: parseInt(document.getElementById('synth-signes').value) || 0,
+                    euros: parseInt(document.getElementById('synth-euros').value) || 0,
+                    dateCloture: new Date().toLocaleDateString('fr-FR')
+                };
+                historiqueSemaines.unshift(semaineArchive);
+
+                // Réinitialiser
+                currentWeekData.demandes = currentWeekData.envoyes = currentWeekData.signes = 0;
+                document.getElementById('synth-demandes').value = 0;
+                document.getElementById('synth-envoyes').value = 0;
+                document.getElementById('synth-signes').value = 0;
+                document.getElementById('synth-euros').value = 0;
+
+                initDates();
+                sauvegarderDateSemaine();
+                sauvegarderDonnees();
+                afficherHistorique();
+                calculerSynthese();
+                calculerStatsDuree();
+
+                showToast(`📅 ${semainesPasses} semaine${semainesPasses > 1 ? 's' : ''} écoulée${semainesPasses > 1 ? 's' : ''} — fiches décalées automatiquement`);
+            }
         }
 
         function afficherHistorique() {
