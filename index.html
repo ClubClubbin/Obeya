@@ -1615,155 +1615,153 @@
 
         // Traitement commandes vocales
         function processVoiceCommand(text) {
-            const lowerText = text.toLowerCase().trim();
-            console.log('Commande:', lowerText);
-
-            // 1. Vérifier l'intention (si la phrase contient un verbe d'action)
-                const intentions = ['ajoute', 'crée', 'nouveau', 'nouvelle', 'faire', 'créer', 'ajouter'];
-                const hasIntention = intentions.some(verb => lowerText.includes(verb));
+        const lowerText = text.toLowerCase().trim();
+        console.log('Traitement commande:', lowerText);
+    
+        // =================================================================
+        // 1. GESTION DU DÉPLACEMENT (Prioritaire car verbe spécifique)
+        // =================================================================
+        const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move|passer)\s+(\w+)\s+(?:vers|dans|en|au)?\s*(demandes?|en cours|devis|envoyés?|signés?|parking)/i);
+        
+        if (deplaceMatch) {
+            const nom = capitalize(deplaceMatch[1]);
+            let status = deplaceMatch[2].toLowerCase();
             
-                if (hasIntention) {
-                    // --- EXTRACTION DU TYPE DE CONTRAT ---
-                    const typesMap = {
-                        'auto': 'Auto',
-                        'santé': 'Santé',
-                        'sante': 'Santé',
-                        'multi': 'Multi',
-                        'gav': 'GAV',
-                        'mrh': 'MRH',
-                        'dab': 'DAB',
-                        'collective': 'Collective',
-                        'collectif': 'Collective'
-                    };
-                    let type = 'Auto'; // Valeur par défaut
-                    for (let key in typesMap) {
-                        if (lowerText.includes(key)) {
-                            type = typesMap[key];
-                            break;
-                        }
-                    }
+            // Normalisation des status
+            if (status.includes('demand')) status = 'demandes';
+            else if (status.includes('cours') || status.includes('devis')) status = 'devis';
+            else if (status.includes('envoy')) status = 'envoyes';
+            else if (status.includes('sign')) status = 'signes';
+            else if (status.includes('park')) status = 'parking';
             
-                    // --- EXTRACTION DE LA CATÉGORIE ---
-                    let cat = lowerText.match(/(pro|professionnel|entreprise|société)/i) ? 'PRO' : 'PART';
+            console.log(`Action: Déplacement | Client: ${nom} -> ${status}`);
+            stopVoice();
+            moveClientByName(nom, status);
+            return;
+        }
+    
+        // =================================================================
+        // 2. GESTION DES NOTES (Prioritaire sur création)
+        // =================================================================
+        const motsClesNote = ['note', 'noter', 'commentaire', 'remarque', 'précision', 'rajoute une note', 'écris'];
+        const isNoteCommand = motsClesNote.some(mot => lowerText.includes(mot));
+    
+        // On s'assure qu'on ne parle pas de "nouveau client"
+        if (isNoteCommand && !lowerText.includes('nouveau client') && !lowerText.includes('créer un client')) {
             
-                    // --- EXTRACTION DU NOM (Version Blindée) ---
-                    let nom = "";
+            let clientNom = "";
+            // Recherche du nom (après "pour", "sur", "dossier de", etc.)
+            const nomMatch = lowerText.match(/(?:pour|sur|à|a|chez|dossier de|fiche de|monsieur|madame|mr|mme|client)\s+([a-zà-ÿ\-]+)/i);
+    
+            if (nomMatch) {
+                clientNom = capitalize(nomMatch[1]);
+            } else {
+                // Fallback : mot après "à" ou "pour"
+                const simpleMatch = lowerText.match(/(?:à|a|pour)\s+([a-zà-ÿ\-]+)/i);
+                if (simpleMatch) clientNom = capitalize(simpleMatch[1]);
+            }
+    
+            if (clientNom) {
+                // Nettoyage de la phrase pour extraire le contenu
+                let contenuNote = lowerText;
+                contenuNote = contenuNote.replace(clientNom.toLowerCase(), ""); // Enlève le nom
+                
+                const motsA_Supprimer = [
+                    'ajouter', 'ajoute', 'rajoute', 'mettre', 'met', 'écrire', 'ecris',
+                    'une', 'un', 'le', 'la', 'au', 'du', 'de', 'des',
+                    'note', 'noter', 'commentaire', 'remarque',
+                    'pour', 'sur', 'à', 'a', 'dans', 'dossier', 'fiche', 'client',
+                    'monsieur', 'madame', 'mr', 'mme'
+                ];
+                const removeRegex = new RegExp(`\\b(${motsA_Supprimer.join('|')})\\b`, 'gi');
+                contenuNote = contenuNote.replace(removeRegex, " ").trim();
+                
+                // Enlève les liaisons de début (ex: "disant que")
+                contenuNote = contenuNote.replace(/^(disant\s+que|que|qu'|:|c'est|il\s+faut|comme\s+quoi)\s*/i, "");
+    
+                if (contenuNote.length > 0) {
+                    contenuNote = contenuNote.charAt(0).toUpperCase() + contenuNote.slice(1);
+                    console.log(`Action: Ajout Note | Client: ${clientNom} | Note: "${contenuNote}"`);
+                    stopVoice();
+                    addNoteToClient(clientNom, contenuNote);
+                    return;
+                }
+            }
+        }
+    
+        // =================================================================
+        // 3. GESTION DE LA CRÉATION (Dernier ressort)
+        // =================================================================
+        const intentionsCreation = ['ajoute', 'crée', 'nouveau', 'nouvelle', 'faire', 'créer', 'ajouter', 'fiche'];
+        const hasCreationIntention = intentionsCreation.some(verb => lowerText.includes(verb));
+    
+        if (hasCreationIntention) {
+            // A. Extraction Type
+            const typesMap = {
+                'auto': 'Auto', 'voiture': 'Auto',
+                'santé': 'Santé', 'sante': 'Santé', 'mutuelle': 'Santé',
+                'multi': 'Multi', 'habitation': 'MRH', 'maison': 'MRH',
+                'gav': 'GAV', 'accident': 'GAV',
+                'mrh': 'MRH',
+                'dab': 'DAB',
+                'collective': 'Collective', 'collectif': 'Collective'
+            };
+            let type = 'Auto'; // Défaut
+            for (let key in typesMap) {
+                if (lowerText.includes(key)) {
+                    type = typesMap[key];
+                    break;
+                }
+            }
+    
+            // B. Extraction Catégorie
+            let cat = lowerText.match(/(pro|professionnel|entreprise|société)/i) ? 'PRO' : 'PART';
+    
+            // C. Extraction Nom (Méthode blindée)
+            let nom = "";
+            let textCleaned = lowerText.replace(/(au nom de|le nom de|du nom de|nom de)/g, "").trim();
             
-                    // 1. On nettoie d'abord les préfixes complexes "parasites"
-                    // On remplace "au nom de", "le nom de" par une chaine vide pour ne pas les confondre
-                    let textCleaned = lowerText.replace(/(au nom de|le nom de|du nom de|nom de)/g, "").trim();
-                    
-                    // Exemple : "crée une fiche client [au nom de] monsieur forestier..."
-                    // Devient : "crée une fiche client monsieur forestier..."
+            const nomMatch = textCleaned.match(/(?:monsieur|madame|mr|mme|m\.|mle|client|fiche|dossier)\s+([a-zà-ÿ\-]+(?:\s+[a-zà-ÿ\-]+)?)/i);
             
-                    // 2. Regex qui cherche le nom après les indicateurs restants (titres ou mots clés)
-                    // On cherche ce qui suit : mr, mme, client, fiche de... 
-                    // ET on autorise un 2ème mot pour le nom (ex: "Gerard Bertrand")
-                    const nomMatch = textCleaned.match(/(?:monsieur|madame|mr|mme|m\.|mle|client|fiche|dossier)\s+([a-zà-ÿ\-]+(?:\s+[a-zà-ÿ\-]+)?)/i);
-                    
-                    if (nomMatch) {
-                        nom = nomMatch[1].trim();
-                    } else {
-                        // 3. Cas de secours : Si la phrase est juste "Nouveau client Forestier"
-                        // On regarde si on trouve un mot qui n'est pas un mot clé connu
-                        const motApresAction = lowerText.match(/(?:nouveau|créer|ajouter|client)\s+([a-zà-ÿ\-]+)/i);
-                        if (motApresAction) {
-                            // On vérifie que ce n'est pas un mot interdit (comme "un", "une", "le")
-                            const candidat = motApresAction[1];
-                            const motsInterdits = ['un', 'une', 'le', 'la', 'pour', 'auto', 'contrat'];
-                            if (!motsInterdits.includes(candidat)) {
-                                nom = candidat;
-                            }
-                        }
-                    }
-            
-                    // 4. Nettoyage final (Safety check)
-                    // Si jamais "monsieur" a été capturé dans le nom (ex: double titre), on l'enlève
-                    if (nom) {
-                        nom = nom.replace(/^(monsieur|madame|mr|mme)\s+/i, "");
-                        nom = capitalize(nom);
+            if (nomMatch) {
+                nom = nomMatch[1].trim();
+            } else {
+                // Cas de secours : "Nouveau client Forestier"
+                const motApresAction = lowerText.match(/(?:nouveau|créer|ajouter|client)\s+([a-zà-ÿ\-]+)/i);
+                if (motApresAction) {
+                    const candidat = motApresAction[1];
+                    const motsInterdits = ['un', 'une', 'le', 'la', 'pour', 'auto', 'contrat', 'fiche'];
+                    if (!motsInterdits.includes(candidat)) {
+                        nom = candidat;
                     }
                 }
-
-                // --- 2. DÉTECTION : EST-CE UNE DEMANDE D'AJOUT DE NOTE ? ---
-                    const motsClesNote = ['note', 'noter', 'commentaire', 'remarque', 'précision', 'rajoute', 'écris'];
-                    // On vérifie si la phrase contient au moins un mot clé
-                    const isNoteCommand = motsClesNote.some(mot => lowerText.includes(mot));
+            }
+    
+            if (nom) {
+                nom = nom.replace(/^(monsieur|madame|mr|mme)\s+/i, ""); // Nettoyage ultime
+                nom = capitalize(nom);
                 
-                    // On évite de confondre avec "Nouveau client"
-                    if (isNoteCommand && !lowerText.includes('nouveau client') && !lowerText.includes('créer un client')) {
-                
-                        // --- 2. EXTRACTION DU NOM DU CLIENT ---
-                        // On cherche des motifs comme "pour [Nom]", "sur [Nom]", "dossier de [Nom]", "fiche de [Nom]"
-                        // ou simplement après "à [Nom]"
-                        let clientNom = "";
-                        const nomMatch = lowerText.match(/(?:pour|sur|à|a|chez|dossier de|fiche de|monsieur|madame|mr|mme|client)\s+([a-zà-ÿ]+)/i);
-                
-                        if (nomMatch) {
-                            clientNom = capitalize(nomMatch[1]);
-                        } else {
-                            // Fallback : Si on dit "Note à Dupont", on essaie de choper le mot après "à" ou "pour"
-                            const simpleMatch = lowerText.match(/(?:à|a|pour)\s+([a-zà-ÿ]+)/i);
-                            if (simpleMatch) clientNom = capitalize(simpleMatch[1]);
-                        }
-                
-                        if (clientNom) {
-                            // --- 3. EXTRACTION DU CONTENU DE LA NOTE (Nettoyage) ---
-                            // On prend toute la phrase et on retire les bouts qu'on a déjà utilisés (Commandes + Nom)
-                            let contenuNote = lowerText;
-                
-                            // a. On supprime le nom trouvé
-                            contenuNote = contenuNote.replace(clientNom.toLowerCase(), "");
-                
-                            // b. On supprime les mots de commande (note, ajouter, pour, sur, dossier...)
-                            const motsA_Supprimer = [
-                                'ajouter', 'ajoute', 'rajoute', 'mettre', 'met', 'écrire', 'ecris',
-                                'une', 'un', 'le', 'la', 'au', 'du', 'de', 'des',
-                                'note', 'noter', 'commentaire', 'remarque',
-                                'pour', 'sur', 'à', 'a', 'dans', 'dossier', 'fiche', 'client',
-                                'monsieur', 'madame', 'mr', 'mme'
-                            ];
-                            
-                            // On crée une Regex dynamique pour supprimer ces mots
-                            const removeRegex = new RegExp(`\\b(${motsA_Supprimer.join('|')})\\b`, 'gi');
-                            contenuNote = contenuNote.replace(removeRegex, " ").trim();
-                
-                            // c. Nettoyage final des "mots de liaison" de début de phrase (ex: "disant que", "que", ":")
-                            // Cela permet de transformer "Note pour Martin disant qu'il est malade" en "il est malade"
-                            contenuNote = contenuNote.replace(/^(disant\s+que|que|qu'|:|c'est|il\s+faut|comme\s+quoi)\s*/i, "");
-                            
-                            // Correction majuscule première lettre de la note
-                            if (contenuNote.length > 0) {
-                                contenuNote = contenuNote.charAt(0).toUpperCase() + contenuNote.slice(1);
-                
-                                console.log(`Action: Ajout Note | Client: ${clientNom} | Note: "${contenuNote}"`);
-                                
-                                stopVoice();
-                                addNoteToClient(clientNom, contenuNote);
-                                return;
-                            }
-                        }
-                    }
-
-            // Déplacer
-            const deplaceMatch = lowerText.match(/(?:déplacer|deplacer|déplace|deplace|move)\s+(\w+)\s+(?:vers|dans|en|au)?\s*(demandes?|en cours|envoyés?|signés?|parking)/i);
-            if (deplaceMatch) {
-                const nom = capitalize(deplaceMatch[1]);
-                let status = deplaceMatch[2].toLowerCase();
-                if (status.includes('demand')) status = 'demandes';
-                else if (status.includes('cours')) status = 'devis';
-                else if (status.includes('envoy')) status = 'envoyes';
-                else if (status.includes('sign')) status = 'signes';
-                else if (status.includes('park')) status = 'parking';
-                
+                console.log(`Action: Création | Nom: ${nom} | Type: ${type} | Cat: ${cat}`);
                 stopVoice();
-                moveClientByName(nom, status);
+                // Petit délai pour laisser l'interface respirer
+                setTimeout(() => createClientFromVoice(nom, type, cat), 300);
                 return;
             }
-
-            showToast('❓ Commande non reconnue. Essayez: "Nouveau client Dupont Auto"');
-            setTimeout(stopVoice, 2000);
         }
+    
+        // =================================================================
+        // 4. AUCUNE CORRESPONDANCE
+        // =================================================================
+        console.log("Commande non comprise");
+        showToast('❓ Commande non comprise. Essayez: "Nouveau client Dupont" ou "Déplacer Martin vers signés"');
+        setTimeout(stopVoice, 2500);
+    }
+    
+    // Fonction utilitaire indispensable
+    function capitalize(str) {
+        if (!str) return "";
+        return str.replace(/\b\w/g, l => l.toUpperCase());
+    }
 
         function createClientFromVoice(nom, type, cat) {
             const card = document.createElement('div');
