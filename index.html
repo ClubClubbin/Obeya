@@ -1882,23 +1882,24 @@
 
         function mettreAJourDate(card, newStatus) {
             const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            const iso = new Date().toISOString().slice(0, 10);
             let datesDiv = card.querySelector('.slot-dates');
-            
+
             if (!datesDiv) {
                 datesDiv = document.createElement('div');
                 datesDiv.className = 'slot-dates';
                 card.insertBefore(datesDiv, card.querySelector('.slot-stickers'));
             }
-            
+
             let dateDemande = datesDiv.dataset.demande || '';
             let dateDevis = datesDiv.dataset.devis || '';
             let dateEnvoye = datesDiv.dataset.envoye || '';
             let dateSigne = datesDiv.dataset.signe || '';
-            
-            if (newStatus === 'demandes' && !dateDemande) { dateDemande = today; datesDiv.dataset.demande = today; }
-            else if (newStatus === 'devis' && !dateDevis) { dateDevis = today; datesDiv.dataset.devis = today; }
-            else if (newStatus === 'envoyes' && !dateEnvoye) { dateEnvoye = today; datesDiv.dataset.envoye = today; }
-            else if (newStatus === 'signes' && !dateSigne) { dateSigne = today; datesDiv.dataset.signe = today; }
+
+            if (newStatus === 'demandes' && !dateDemande) { dateDemande = today; datesDiv.dataset.demande = today; datesDiv.dataset.demandeIso = iso; }
+            else if (newStatus === 'devis' && !dateDevis) { dateDevis = today; datesDiv.dataset.devis = today; datesDiv.dataset.devisIso = iso; }
+            else if (newStatus === 'envoyes' && !dateEnvoye) { dateEnvoye = today; datesDiv.dataset.envoye = today; datesDiv.dataset.envoyeIso = iso; }
+            else if (newStatus === 'signes' && !dateSigne) { dateSigne = today; datesDiv.dataset.signe = today; datesDiv.dataset.signeIso = iso; }
             
             let html = '';
             if (dateDemande) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${dateDemande}</div>`;
@@ -1998,13 +1999,14 @@
         function calculerStatsDuree() {
             const cardsSignees = document.querySelectorAll('[data-status="signes"] .client-slot');
             const durees = [];
-            
+
             cardsSignees.forEach(card => {
                 const datesDiv = card.querySelector('.slot-dates');
                 if (datesDiv) {
-                    const d1 = parseDateFr(datesDiv.dataset.demande);
-                    const d2 = parseDateFr(datesDiv.dataset.signe);
-                    if (d1 && d2) durees.push(Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)));
+                    // Prefer ISO dates for accurate calculation, fallback to dd/mm parsing
+                    const d1 = datesDiv.dataset.demandeIso ? new Date(datesDiv.dataset.demandeIso) : parseDateFr(datesDiv.dataset.demande);
+                    const d2 = datesDiv.dataset.signeIso ? new Date(datesDiv.dataset.signeIso) : parseDateFr(datesDiv.dataset.signe);
+                    if (d1 && d2) durees.push(Math.max(0, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24))));
                 }
             });
             
@@ -2196,11 +2198,12 @@
 
         function creerDatesHtml(status) {
             const today = new Date().toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'});
+            const iso = new Date().toISOString().slice(0, 10);
             let html = '<div class="slot-dates"', d = '', de = '', en = '', s = '';
-            if (status === 'demandes') { d = today; html += ` data-demande="${today}"`; }
-            else if (status === 'devis') { d = de = today; html += ` data-demande="${today}" data-devis="${today}"`; }
-            else if (status === 'envoyes') { d = en = today; html += ` data-demande="${today}" data-envoye="${today}"`; }
-            else if (status === 'signes') { d = s = today; html += ` data-demande="${today}" data-signe="${today}"`; }
+            if (status === 'demandes') { d = today; html += ` data-demande="${today}" data-demande-iso="${iso}"`; }
+            else if (status === 'devis') { d = de = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-devis="${today}" data-devis-iso="${iso}"`; }
+            else if (status === 'envoyes') { d = en = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-envoye="${today}" data-envoye-iso="${iso}"`; }
+            else if (status === 'signes') { d = s = today; html += ` data-demande="${today}" data-demande-iso="${iso}" data-signe="${today}" data-signe-iso="${iso}"`; }
             html += '>';
             if (d) html += `<div class="slot-date-item"><span class="slot-date-label">🟡 Demandé:</span> ${d}</div>`;
             if (de) html += `<div class="slot-date-item"><span class="slot-date-label">🔵 En cours:</span> ${de}</div>`;
