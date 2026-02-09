@@ -1109,6 +1109,103 @@
             .synthese-item input { width: 40px; font-size: 14px; }
         }
         
+        /* Écran de connexion */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.4s, transform 0.4s;
+        }
+        .login-screen.hidden {
+            opacity: 0;
+            transform: scale(1.05);
+            pointer-events: none;
+        }
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 35px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .login-box img {
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        .login-box h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .login-box .login-subtitle {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+        .login-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .login-field:focus {
+            border-color: #667eea;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        .login-error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 12px;
+            min-height: 20px;
+        }
+        /* Bouton déconnexion */
+        .btn-logout {
+            background: none;
+            border: 1px solid #bdc3c7;
+            color: #7f8c8d;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .btn-logout:hover {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+
         /* Installation PWA prompt */
         .install-prompt {
             display: none;
@@ -1156,9 +1253,24 @@
         <button onclick="dismissInstall()" style="background:none;border:none;color:white;font-size:18px;">✕</button>
     </div>
 
+    <!-- Écran de connexion -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <img src="icons/logo-areas.svg" alt="Areas Assurances">
+            <h2>Tableau Obeya</h2>
+            <div class="login-subtitle">Connectez-vous pour accéder au tableau</div>
+            <form onsubmit="loginUser(event)">
+                <input type="email" class="login-field" id="loginEmail" placeholder="Email" required autocomplete="email">
+                <input type="password" class="login-field" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password">
+                <button type="submit" class="login-btn" id="loginBtn">Se connecter</button>
+            </form>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
-    
+
     <!-- Delete Zone -->
     <div class="delete-zone" id="deleteZone">🗑️ Relâchez pour supprimer</div>
 
@@ -1183,6 +1295,7 @@
                 <div class="header-actions no-print">
                     <button class="header-btn" onclick="imprimer()" title="Imprimer">🖨️</button>
                     <button class="header-btn" onclick="showHelp()" title="Aide">❓</button>
+                    <button class="btn-logout" onclick="logoutUser()" title="Déconnexion">🔓 Déco.</button>
                 </div>
             </div>
             
@@ -2731,24 +2844,95 @@ Android: Menu ⋮ → "Ajouter à l'écran d'accueil"`);
         }
 
         // ================================================
-        // === FIREBASE - Synchronisation temps réel ===
+        // === FIREBASE - Auth + Synchronisation ===
         // ================================================
+
+        let firebaseApp = null, firebaseAuthModule = null;
 
         async function initFirebase() {
             try {
                 const appModule = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
                 const fsModule = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+                const authModule = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
 
-                const app = appModule.initializeApp(firebaseConfig);
-                firebaseDb = fsModule.getFirestore(app);
+                firebaseApp = appModule.initializeApp(firebaseConfig);
+                firebaseDb = fsModule.getFirestore(firebaseApp);
                 firebaseModules = fsModule;
+                firebaseAuthModule = authModule;
 
-                ecouterFirebase();
-                updateSyncStatus('connected');
-                console.log('Firebase: connecté');
+                const auth = authModule.getAuth(firebaseApp);
+
+                // Écouter l'état de connexion
+                authModule.onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // Connecté → cacher login, afficher app
+                        console.log('Firebase Auth: connecté comme', user.email);
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        setTimeout(() => {
+                            document.getElementById('loginScreen').style.display = 'none';
+                        }, 400);
+                        ecouterFirebase();
+                        updateSyncStatus('connected');
+                    } else {
+                        // Déconnecté → afficher login
+                        console.log('Firebase Auth: non connecté');
+                        document.getElementById('loginScreen').style.display = '';
+                        document.getElementById('loginScreen').classList.remove('hidden');
+                        updateSyncStatus('offline');
+                    }
+                });
             } catch (err) {
                 console.error('Firebase init error:', err);
+                // En cas d'erreur réseau, cacher le login et fonctionner en local
+                document.getElementById('loginScreen').classList.add('hidden');
+                setTimeout(() => {
+                    document.getElementById('loginScreen').style.display = 'none';
+                }, 400);
                 updateSyncStatus('offline');
+            }
+        }
+
+        async function loginUser(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('loginError');
+
+            btn.disabled = true;
+            btn.textContent = 'Connexion...';
+            errorEl.textContent = '';
+
+            try {
+                const auth = firebaseAuthModule.getAuth(firebaseApp);
+                await firebaseAuthModule.signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged gère la suite
+            } catch (err) {
+                console.error('Login error:', err);
+                let msg = 'Erreur de connexion';
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                    msg = 'Email ou mot de passe incorrect';
+                } else if (err.code === 'auth/too-many-requests') {
+                    msg = 'Trop de tentatives. Réessayez plus tard.';
+                } else if (err.code === 'auth/network-request-failed') {
+                    msg = 'Pas de connexion internet';
+                }
+                errorEl.textContent = msg;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Se connecter';
+        }
+
+        async function logoutUser() {
+            if (!firebaseAuthModule || !firebaseApp) return;
+            if (!confirm('Se déconnecter ?')) return;
+            try {
+                const auth = firebaseAuthModule.getAuth(firebaseApp);
+                await firebaseAuthModule.signOut(auth);
+                showToast('Déconnecté');
+            } catch (err) {
+                console.error('Logout error:', err);
             }
         }
 
